@@ -1,6 +1,9 @@
 import type { AgentProposal } from '../types';
-import { EXCEPTIONS } from '../data/municipal';
+import { EMPLOYEES, PAY_RUN, otCostFor } from '../data/municipal';
 import { makeProposal } from './util';
+
+const usd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+const OT_THRESHOLD = 10; // OT hours in a biweekly period worth confirming
 
 // ---------------------------------------------------------------------------
 // Payroll / HR agent
@@ -38,28 +41,35 @@ export function payrollPreRun(): AgentProposal[] {
 
 /** Scan for payroll exceptions (e.g. anomalous overtime) needing confirmation. */
 export function payrollExceptionScan(): AgentProposal[] {
-  const out: AgentProposal[] = [];
-  for (const x of EXCEPTIONS.filter((e) => e.module === 'Payroll')) {
-    out.push(
-      makeProposal({
-        role: 'payroll',
-        kind: 'payroll-exception',
-        title: `Payroll exception (${x.severity})`,
-        rationale: x.description,
-        confidence: 0.78,
-        sources: [{ system: 'TRIO', module: 'Payroll', recordId: x.id, label: `Payroll exception ${x.id}` }],
-        suggestedAction: 'Route to the department manager to confirm coding before the run is committed.',
-        draft: [
-          `Exception: ${x.description}`,
-          '',
-          `Recommended check for review:`,
-          `• Confirm the hours are correct and coded to the right project/account (e.g. storm-response vs. regular OT).`,
-          `• If correct, document the justification; if not, correct the timesheet before committing the run.`,
-        ].join('\n'),
-      }),
-    );
-  }
-  return out;
+  const flagged = PAY_RUN.lines
+    .map((line) => ({ line, emp: EMPLOYEES.find((e) => e.id === line.employeeId)! }))
+    .filter(({ line }) => line.otHours >= OT_THRESHOLD);
+
+  if (flagged.length === 0) return [];
+
+  const totalOtCost = flagged.reduce((s, { emp, line }) => s + otCostFor(emp, line), 0);
+
+  return [
+    makeProposal({
+      role: 'payroll',
+      kind: 'payroll-exception',
+      title: `Overtime exceptions on ${PAY_RUN.id} (${flagged.length})`,
+      rationale: `${flagged.length} employee(s) over ${OT_THRESHOLD} OT hours this period; ~${usd(totalOtCost)} in OT to confirm.`,
+      confidence: 0.8,
+      sources: flagged.map(({ emp }) => ({ system: 'TRIO' as const, module: 'Payroll', recordId: emp.id, label: `${emp.name} (${emp.department})` })),
+      suggestedAction: 'Route to the department managers to confirm coding (storm-response vs. regular OT) before the run is committed.',
+      draft: [
+        `Pay run ${PAY_RUN.id} (${PAY_RUN.periodStart} – ${PAY_RUN.periodEnd}), check date ${PAY_RUN.checkDate}.`,
+        '',
+        `Overtime above ${OT_THRESHOLD} hours:`,
+        ...flagged.map(({ emp, line }) => `• ${emp.name} — ${emp.position}, ${emp.department}: ${line.otHours} OT hrs (~${usd(otCostFor(emp, line))})`),
+        '',
+        `Recommended checks for review:`,
+        `1. Confirm the hours are correct and coded to the right account (e.g., Winter Roads 01-4312-380 storm response vs. regular OT).`,
+        `2. Document the justification; correct any timesheet errors before committing the run.`,
+      ].join('\n'),
+    }),
+  ];
 }
 
 /** Year-end filing preparation checklist. */

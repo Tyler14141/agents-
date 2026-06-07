@@ -2,27 +2,41 @@ import type {
   AgendaSubmission,
   BudgetLine,
   CodeCase,
+  Employee,
   Exception,
   Inquiry,
   KnowledgeArticle,
   Parcel,
+  PayRun,
+  PayRunLine,
+  RateSchedule,
   Receipt,
   RecordsRequest,
   Resident,
+  RevenueLine,
   TaxAccount,
   UtilityAccount,
 } from '../types';
 
 // ---------------------------------------------------------------------------
-// Mock systems of record for the Town of Presque Isle (matching the TRIO Web
-// screenshots: Harris Local Government, Presque Isle, ME). All figures are
-// fabricated for demonstration.
+// Mock systems of record for the City of Presque Isle, ME (matching the TRIO
+// Web screenshots: Harris Local Government). Budget/payroll/utility figures are
+// realistic and grounded in public data (see note below) but illustrative.
 // ---------------------------------------------------------------------------
 
+// Figures below are modeled on the City of Presque Isle, ME FY2026 approved
+// budget and public records: ~$5.8M general fund / ~$12.9M all funds, 2020
+// population 8,797, effective property-tax rate ~2.38% (≈ 24.5 mill). Line-item
+// detail is realistic but illustrative. Sources:
+//   presqueislemaine.gov 2026 Approved Budget; census.gov QuickFacts.
 export const MUNICIPALITY = {
-  name: 'Town of Presque Isle',
+  name: 'City of Presque Isle',
   state: 'ME',
   fiscalYear: 'FY2026',
+  population: 8797,
+  millRate: 24.5, // per $1,000 of assessed value
+  generalFundBudget: 5_800_000,
+  allFundsBudget: 12_900_000,
   // Demo "today" — keeps generated content deterministic relative to the data.
   asOf: '2026-06-07',
   user: { name: 'Ben Caron', title: 'Finance / Front Counter', office: 'Presque Isle' },
@@ -77,6 +91,11 @@ export const RESIDENTS: Resident[] = [
     utilityAccountId: 'U-5015',
     taxAccountId: 'T-3092',
   },
+  { id: 'R-1006', name: 'Greenfield Apartments LLC', mailingAddress: '88 Main Street, Presque Isle, ME 04769', phone: '(207) 555-0220', language: 'en', utilityAccountId: 'U-5016' },
+  { id: 'R-1007', name: 'Brian & Sara Levesque', mailingAddress: '21 Chapman Road, Presque Isle, ME 04769', phone: '(207) 555-0231', language: 'en', utilityAccountId: 'U-5017' },
+  { id: 'R-1008', name: 'Aroostook Diner Inc', mailingAddress: '140 Main Street, Presque Isle, ME 04769', phone: '(207) 555-0244', language: 'en', utilityAccountId: 'U-5018' },
+  { id: 'R-1009', name: 'Patricia Gagnon', mailingAddress: '9 Birch Street, Presque Isle, ME 04769', phone: '(207) 555-0259', language: 'en', utilityAccountId: 'U-5019' },
+  { id: 'R-1010', name: 'Daniel Bouchard', mailingAddress: '33 Third Street, Presque Isle, ME 04769', phone: '(207) 555-0262', language: 'en', utilityAccountId: 'U-5020' },
 ];
 
 export const UTILITY_ACCOUNTS: UtilityAccount[] = [
@@ -143,7 +162,40 @@ export const UTILITY_ACCOUNTS: UtilityAccount[] = [
       { period: '2026-05', ccf: 2 }, // move-out, partial month
     ],
   },
+  {
+    id: 'U-5016', residentId: 'R-1006', serviceAddress: '88 Main Street (apartments)', status: 'active', balance: 0, pastDueDays: 0, lastReadDate: '2026-05-28',
+    usage: [{ period: '2026-01', ccf: 58 }, { period: '2026-02', ccf: 61 }, { period: '2026-03', ccf: 59 }, { period: '2026-04', ccf: 62 }, { period: '2026-05', ccf: 60 }],
+  },
+  {
+    id: 'U-5017', residentId: 'R-1007', serviceAddress: '21 Chapman Road', status: 'active', balance: 0, pastDueDays: 0, lastReadDate: '2026-05-27',
+    usage: [{ period: '2026-01', ccf: 8 }, { period: '2026-02', ccf: 7 }, { period: '2026-03', ccf: 8 }, { period: '2026-04', ccf: 9 }, { period: '2026-05', ccf: 8 }],
+  },
+  {
+    id: 'U-5018', residentId: 'R-1008', serviceAddress: '140 Main Street (diner)', status: 'active', balance: 213.75, pastDueDays: 12, lastReadDate: '2026-05-29',
+    usage: [{ period: '2026-01', ccf: 92 }, { period: '2026-02', ccf: 88 }, { period: '2026-03', ccf: 95 }, { period: '2026-04', ccf: 97 }, { period: '2026-05', ccf: 94 }],
+  },
+  {
+    id: 'U-5019', residentId: 'R-1009', serviceAddress: '9 Birch Street', status: 'delinquent', balance: 96.4, pastDueDays: 41, lastReadDate: '2026-05-26',
+    usage: [{ period: '2026-01', ccf: 7 }, { period: '2026-02', ccf: 7 }, { period: '2026-03', ccf: 6 }, { period: '2026-04', ccf: 7 }, { period: '2026-05', ccf: 7 }],
+  },
+  {
+    id: 'U-5020', residentId: 'R-1010', serviceAddress: '33 Third Street', status: 'active', balance: 0, pastDueDays: 0, lastReadDate: '2026-05-28',
+    usage: [{ period: '2026-01', ccf: 10 }, { period: '2026-02', ccf: 11 }, { period: '2026-03', ccf: 9 }, { period: '2026-04', ccf: 10 }, { period: '2026-05', ccf: 10 }],
+  },
 ];
+
+// Water/sewer rate schedule (per billing period).
+export const RATE_SCHEDULE: RateSchedule = {
+  waterBase: 28.5,
+  sewerBase: 32.0,
+  waterTiers: [
+    { upToCcf: 10, perCcf: 4.2 },
+    { upToCcf: 30, perCcf: 5.1 },
+    { upToCcf: null, perCcf: 6.05 },
+  ],
+  sewerPerCcf: 5.8,
+  effective: '2025-07-01',
+};
 
 export const TAX_ACCOUNTS: TaxAccount[] = [
   {
@@ -248,16 +300,49 @@ export const RECEIPTS: Receipt[] = [
   { id: 'RC-9014', residentId: 'R-1002', date: '2026-05-29', module: 'Utility', description: 'Utility payment on account U-5013', amount: 60.0, tender: 'Credit' },
 ];
 
-// Budgetary — selected General Fund lines with budget-to-actual at ~92% of FY.
+// Budgetary — FY2026 General Fund (~$5.8M), modeled on the City of Presque Isle.
+// Year ~92% elapsed. A few lines are intentionally over/under for the agents.
 export const BUDGET_LINES: BudgetLine[] = [
-  { id: 'B-1', account: '01-4150-110', department: 'Administration', description: 'Salaries — Full Time', budget: 412000, actual: 379400, encumbered: 0 },
-  { id: 'B-2', account: '01-4150-220', department: 'Administration', description: 'Software & Licensing', budget: 38000, actual: 51200, encumbered: 2400 },
-  { id: 'B-3', account: '01-4220-430', department: 'Public Works', description: 'Vehicle Repair & Maintenance', budget: 95000, actual: 121800, encumbered: 6500 },
-  { id: 'B-4', account: '01-4220-262', department: 'Public Works', description: 'Fuel — Diesel & Gas', budget: 78000, actual: 69400, encumbered: 0 },
-  { id: 'B-5', account: '01-4130-340', department: 'Finance', description: 'Audit & Professional Services', budget: 42000, actual: 41100, encumbered: 0 },
-  { id: 'B-6', account: '01-4910-810', department: 'Recreation', description: 'Program Supplies', budget: 22000, actual: 9800, encumbered: 0 },
-  { id: 'B-7', account: '01-4240-291', department: 'Code Enforcement', description: 'Training & Certification', budget: 6000, actual: 1200, encumbered: 0 },
-  { id: 'B-8', account: '01-4320-360', department: 'Utilities', description: 'Street Lighting — Electricity', budget: 64000, actual: 58900, encumbered: 0 },
+  // General Government
+  { id: 'B-01', account: '01-4110-100', department: 'General Government', description: 'Mayor, Council & Boards', budget: 28000, actual: 22400, encumbered: 0 },
+  { id: 'B-02', account: '01-4130-100', department: 'General Government', description: 'City Manager / Administration', budget: 232000, actual: 214000, encumbered: 0 },
+  { id: 'B-03', account: '01-4140-100', department: 'Finance', description: 'Finance & Treasury', budget: 198000, actual: 182000, encumbered: 0 },
+  { id: 'B-04', account: '01-4150-100', department: 'Clerk', description: 'City Clerk & Elections', budget: 138000, actual: 126000, encumbered: 4500 },
+  { id: 'B-05', account: '01-4151-100', department: 'Assessing', description: 'Assessing', budget: 120000, actual: 109000, encumbered: 0 },
+  { id: 'B-06', account: '01-4153-300', department: 'General Government', description: 'Legal & Professional Services', budget: 72000, actual: 78500, encumbered: 0 },
+  { id: 'B-07', account: '01-4155-220', department: 'General Government', description: 'IT & Software Licensing', budget: 98000, actual: 118400, encumbered: 6500 },
+  { id: 'B-08', account: '01-4196-520', department: 'General Government', description: 'Insurance & Risk', budget: 162000, actual: 162000, encumbered: 0 },
+  // Public Safety
+  { id: 'B-09', account: '01-4210-100', department: 'Police', description: 'Police Department', budget: 1395000, actual: 1286000, encumbered: 12000 },
+  { id: 'B-10', account: '01-4215-100', department: 'Police', description: 'Dispatch / Communications', budget: 252000, actual: 231000, encumbered: 0 },
+  { id: 'B-11', account: '01-4220-510', department: 'Fire', description: 'Fire & Ambulance — GF support', budget: 210000, actual: 210000, encumbered: 0 },
+  { id: 'B-12', account: '01-4240-100', department: 'Code Enforcement', description: 'Code Enforcement & Health', budget: 94000, actual: 79000, encumbered: 0 },
+  // Public Works
+  { id: 'B-13', account: '01-4310-100', department: 'Public Works', description: 'Public Works & Highway', budget: 612000, actual: 561000, encumbered: 8000 },
+  { id: 'B-14', account: '01-4312-380', department: 'Public Works', description: 'Winter Roads — Salt, Sand & OT', budget: 318000, actual: 372500, encumbered: 0 },
+  { id: 'B-15', account: '01-4313-430', department: 'Public Works', description: 'Fleet Maintenance & Fuel', budget: 268000, actual: 251000, encumbered: 9500 },
+  { id: 'B-16', account: '01-4320-360', department: 'Public Works', description: 'Street Lighting — Electricity', budget: 62000, actual: 56500, encumbered: 0 },
+  { id: 'B-17', account: '01-4194-410', department: 'Public Works', description: 'Public Buildings & Grounds', budget: 158000, actual: 142000, encumbered: 5000 },
+  { id: 'B-18', account: '01-4324-340', department: 'Public Works', description: 'Solid Waste & Recycling', budget: 132000, actual: 124000, encumbered: 0 },
+  // Health, Welfare, Culture & Recreation
+  { id: 'B-19', account: '01-4411-700', department: 'Health & Welfare', description: 'General Assistance', budget: 58000, actual: 41000, encumbered: 0 },
+  { id: 'B-20', account: '01-4520-100', department: 'Recreation', description: 'Recreation & Parks', budget: 358000, actual: 196000, encumbered: 0 },
+  { id: 'B-21', account: '01-4550-100', department: 'Library', description: 'Turner Memorial Library', budget: 332000, actual: 304000, encumbered: 0 },
+  // Debt & Capital
+  { id: 'B-22', account: '01-4710-900', department: 'Debt & Capital', description: 'Debt Service — Principal & Interest', budget: 372000, actual: 372000, encumbered: 0 },
+  { id: 'B-23', account: '01-4900-800', department: 'Debt & Capital', description: 'Capital Reserve Transfers', budget: 131000, actual: 131000, encumbered: 0 },
+];
+
+// FY2026 General Fund revenues (~$5.8M to balance appropriations).
+export const REVENUE_LINES: RevenueLine[] = [
+  { id: 'R-01', account: '01-3010-000', source: 'Property tax commitment', budget: 3400000, actual: 3180000 },
+  { id: 'R-02', account: '01-3020-000', source: 'Auto & boat excise tax', budget: 1150000, actual: 1062000 },
+  { id: 'R-03', account: '01-3300-000', source: 'State revenue sharing', budget: 520000, actual: 480000 },
+  { id: 'R-04', account: '01-3310-000', source: 'State road assistance (URIP)', budget: 95000, actual: 95000 },
+  { id: 'R-05', account: '01-3320-000', source: 'Homestead & BETE reimbursement', budget: 210000, actual: 210000 },
+  { id: 'R-06', account: '01-3400-000', source: 'Licenses, permits & fees', budget: 165000, actual: 151000 },
+  { id: 'R-07', account: '01-3500-000', source: 'Interest, fines & miscellaneous', budget: 110000, actual: 104000 },
+  { id: 'R-08', account: '01-3900-000', source: 'Transfer from fund balance / reserves', budget: 150000, actual: 0 },
 ];
 
 export const EXCEPTIONS: Exception[] = [
@@ -407,3 +492,72 @@ export const CODE_CASES: CodeCase[] = [
   { id: 'CE-2026-031', status: 'open', address: '7 Academy Street', parcelId: '02-C-19', type: 'Property maintenance', description: 'Peeling paint and failing porch rail; prior verbal notice given.', openedAt: '2026-04-28', lastActivity: '2026-05-20', ageDays: 40 },
   { id: 'CE-2026-018', status: 'notice-sent', address: '15 Chapman Road', type: 'Zoning', description: 'Home business exceeding permitted scope; formal notice sent, compliance deadline passed.', openedAt: '2026-03-30', lastActivity: '2026-05-18', ageDays: 69 },
 ];
+
+// ---- Payroll: employees + current biweekly pay run -----------------------
+// Municipal salaries are public record; names here are fictional. Pay amounts
+// are computed from rate + hours (see payFor) rather than stored.
+
+export const EMPLOYEES: Employee[] = [
+  { id: 'E-100', name: 'Diane Levesque', department: 'Administration', position: 'City Manager', type: 'salary', rate: 116000, fte: 1, status: 'active', ytdGross: 96667 },
+  { id: 'E-101', name: 'Ben Caron', department: 'Finance', position: 'Finance Director', type: 'salary', rate: 86000, fte: 1, status: 'active', ytdGross: 71667 },
+  { id: 'E-102', name: 'Karen Michaud', department: 'Finance', position: 'Deputy Treasurer / Tax Collector', type: 'hourly', rate: 24.5, fte: 1, status: 'active', ytdGross: 42500 },
+  { id: 'E-103', name: 'Lisa Pelletier', department: 'Clerk', position: 'City Clerk', type: 'salary', rate: 58000, fte: 1, status: 'active', ytdGross: 48333 },
+  { id: 'E-104', name: 'Renee Cyr', department: 'Clerk', position: 'Deputy Clerk', type: 'hourly', rate: 20.0, fte: 1, status: 'active', ytdGross: 34667 },
+  { id: 'E-105', name: 'David Soucy', department: 'Assessing', position: 'Assessor', type: 'salary', rate: 70000, fte: 1, status: 'active', ytdGross: 58333 },
+  { id: 'E-106', name: 'Mark Bouchard', department: 'Code Enforcement', position: 'Code Enforcement Officer', type: 'salary', rate: 60000, fte: 1, status: 'active', ytdGross: 50000 },
+  { id: 'E-107', name: 'Robert Gallagher', department: 'Police', position: 'Police Chief', type: 'salary', rate: 96000, fte: 1, status: 'active', ytdGross: 80000 },
+  { id: 'E-108', name: 'Tyler Hebert', department: 'Police', position: 'Patrol Officer', type: 'hourly', rate: 28.5, fte: 1, status: 'active', ytdGross: 51480 },
+  { id: 'E-109', name: 'Amy Dubois', department: 'Police', position: 'Patrol Officer', type: 'hourly', rate: 27.0, fte: 1, status: 'active', ytdGross: 47340 },
+  { id: 'E-110', name: 'Sandra Ouellette', department: 'Police', position: 'Dispatcher', type: 'hourly', rate: 21.0, fte: 1, status: 'active', ytdGross: 36540 },
+  { id: 'E-111', name: 'Paul Thibodeau', department: 'Public Works', position: 'Public Works Director', type: 'salary', rate: 80000, fte: 1, status: 'active', ytdGross: 66667 },
+  { id: 'E-112', name: 'Gary Plourde', department: 'Public Works', position: 'Equipment Operator', type: 'hourly', rate: 23.0, fte: 1, status: 'active', ytdGross: 41400 },
+  { id: 'E-113', name: 'Steve Albert', department: 'Public Works', position: 'Equipment Operator', type: 'hourly', rate: 22.5, fte: 1, status: 'active', ytdGross: 40500 },
+  { id: 'E-114', name: 'Joanne Roy', department: 'Library', position: 'Library Director', type: 'salary', rate: 56000, fte: 1, status: 'active', ytdGross: 46667 },
+  { id: 'E-115', name: 'Megan Bossie', department: 'Recreation', position: 'Recreation Director', type: 'salary', rate: 60000, fte: 1, status: 'active', ytdGross: 50000 },
+];
+
+export const PAY_RUN: PayRun = {
+  id: 'PR-2026-12',
+  periodStart: '2026-05-25',
+  periodEnd: '2026-06-07',
+  checkDate: '2026-06-12',
+  frequency: 'Biweekly',
+  status: 'open',
+  lines: [
+    { employeeId: 'E-100', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-101', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-102', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-103', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-104', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-105', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-106', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-107', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-108', regularHours: 80, otHours: 9 },
+    { employeeId: 'E-109', regularHours: 80, otHours: 4 },
+    { employeeId: 'E-110', regularHours: 80, otHours: 6 },
+    { employeeId: 'E-111', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-112', regularHours: 80, otHours: 18 }, // storm response — flagged
+    { employeeId: 'E-113', regularHours: 80, otHours: 14 }, // storm response — flagged
+    { employeeId: 'E-114', regularHours: 80, otHours: 0 },
+    { employeeId: 'E-115', regularHours: 80, otHours: 0 },
+  ],
+};
+
+const DEDUCTION_RATE = 0.3; // est. withholding + FICA + MainePERS + benefits
+
+/** Gross pay for an employee on a pay-run line (salary = annual/26). */
+export function grossFor(emp: Employee, line: PayRunLine): number {
+  if (emp.type === 'salary') return emp.rate / 26;
+  return line.regularHours * emp.rate + line.otHours * emp.rate * 1.5;
+}
+
+export function otCostFor(emp: Employee, line: PayRunLine): number {
+  return emp.type === 'hourly' ? line.otHours * emp.rate * 1.5 : 0;
+}
+
+/** Gross / deductions / net for a pay-run line. */
+export function payFor(emp: Employee, line: PayRunLine): { gross: number; deductions: number; net: number } {
+  const gross = grossFor(emp, line);
+  const deductions = gross * DEDUCTION_RATE;
+  return { gross, deductions, net: gross - deductions };
+}

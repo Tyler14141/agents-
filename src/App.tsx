@@ -8,6 +8,7 @@ import { MotorVehicleScreen } from './components/screens/MotorVehicleScreen';
 import { TaxScreen } from './components/screens/TaxScreen';
 import { UtilityScreen } from './components/screens/UtilityScreen';
 import { BudgetaryScreen } from './components/screens/BudgetaryScreen';
+import { PayrollScreen } from './components/screens/PayrollScreen';
 import { useStore } from './store';
 import { MUNICIPALITY } from './data/municipal';
 
@@ -22,6 +23,7 @@ const MODULES = [
   { id: 'tax', label: 'Tax', icon: '🧾', color: '#c0392b', active: true },
   { id: 'ub', label: 'Utility Billing', icon: '💧', color: '#2980b9', active: true },
   { id: 'bud', label: 'Budgetary', icon: '💼', color: '#d68910', active: true },
+  { id: 'pr', label: 'Payroll', icon: '👥', color: '#8e44ad', active: true },
   { id: 'clk', label: 'Clerk', icon: '🗂️', color: '#16a085', active: false },
   { id: 'cama', label: 'CAMA', icon: '📐', color: '#7f8c8d', active: false },
 ];
@@ -87,6 +89,17 @@ const MODULE_DEFS: Record<string, TrioModuleDef> = {
       { label: 'File Maintenance' },
     ],
     tabs: [{ id: 'bva', label: 'Budget vs. Actual', color: '#d68910', Screen: BudgetaryScreen }],
+  },
+  pr: {
+    brand: 'PAYROLL',
+    menu: [
+      { label: 'Pay Run', active: true }, { label: 'Employees' }, { label: 'Timesheets' },
+      { label: 'Deductions & Benefits' }, { label: 'Remittances' },
+      { label: 'Reports', section: true },
+      { label: 'Payroll Register', indent: true }, { label: 'W-2 / Year-End', indent: true },
+      { label: 'File Maintenance' },
+    ],
+    tabs: [{ id: 'run', label: 'Pay Run', color: '#8e44ad', Screen: PayrollScreen }],
   },
 };
 

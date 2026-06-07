@@ -108,6 +108,60 @@ export interface BudgetLine {
   encumbered: number;
 }
 
+export interface RevenueLine {
+  id: string;
+  account: string;
+  source: string;
+  budget: number;
+  actual: number;
+}
+
+// ---- Payroll ----
+
+export interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  position: string;
+  type: 'salary' | 'hourly';
+  /** Annual salary (salary) or hourly rate (hourly), USD. */
+  rate: number;
+  fte: number;
+  status: 'active' | 'leave';
+  ytdGross: number;
+}
+
+export interface PayRunLine {
+  employeeId: string;
+  regularHours: number;
+  otHours: number;
+}
+
+export interface PayRun {
+  id: string;
+  periodStart: string;
+  periodEnd: string;
+  checkDate: string;
+  frequency: 'Biweekly';
+  status: 'open' | 'committed';
+  lines: PayRunLine[];
+}
+
+// ---- Utility rate schedule ----
+
+export interface RateTier {
+  upToCcf: number | null; // null = and above
+  perCcf: number;
+}
+
+export interface RateSchedule {
+  waterBase: number; // per billing period
+  sewerBase: number;
+  waterTiers: RateTier[];
+  sewerPerCcf: number;
+  effective: string;
+}
+
 export type ExceptionModule = 'Utility' | 'Tax' | 'Payroll' | 'Cash Receipts';
 
 export interface Exception {

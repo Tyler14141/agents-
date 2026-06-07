@@ -14,9 +14,14 @@ import {
   PARCELS,
   RECEIPTS,
   BUDGET_LINES,
+  REVENUE_LINES,
   EXCEPTIONS,
   INQUIRIES,
   KNOWLEDGE,
+  EMPLOYEES,
+  PAY_RUN,
+  RATE_SCHEDULE,
+  payFor,
 } from '../data/municipal';
 
 export interface ChatMessage {
@@ -26,13 +31,25 @@ export interface ChatMessage {
 
 function dataContext(): string {
   const j = (label: string, rows: unknown[]) => `${label}:\n${JSON.stringify(rows)}`;
+  const payroll = PAY_RUN.lines.map((l) => {
+    const e = EMPLOYEES.find((x) => x.id === l.employeeId)!;
+    const p = payFor(e, l);
+    return {
+      id: e.id, name: e.name, dept: e.department, position: e.position, type: e.type, rate: e.rate,
+      regularHours: l.regularHours, otHours: l.otHours,
+      gross: Math.round(p.gross), deductions: Math.round(p.deductions), net: Math.round(p.net),
+    };
+  });
   return [
     j('RESIDENTS', RESIDENTS),
     j('UTILITY_ACCOUNTS', UTILITY_ACCOUNTS),
+    j('UTILITY_RATE_SCHEDULE', [RATE_SCHEDULE]),
     j('TAX_ACCOUNTS', TAX_ACCOUNTS),
     j('PARCELS (CAMA)', PARCELS),
     j('RECEIPTS (Cash Receipts)', RECEIPTS),
-    j('BUDGET_LINES (Budgetary, FY ~92% elapsed)', BUDGET_LINES),
+    j('BUDGET_EXPENDITURES (Budgetary, FY ~92% elapsed)', BUDGET_LINES),
+    j('BUDGET_REVENUES', REVENUE_LINES),
+    `PAY_RUN ${PAY_RUN.id} (${PAY_RUN.periodStart}..${PAY_RUN.periodEnd}, check ${PAY_RUN.checkDate}, ${PAY_RUN.status}); pay computed per line:\n${JSON.stringify(payroll)}`,
     j('OPEN_EXCEPTIONS', EXCEPTIONS),
     j('RESIDENT_INQUIRIES', INQUIRIES),
     j('APPROVED_KNOWLEDGE_BASE', KNOWLEDGE),
