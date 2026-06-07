@@ -23,9 +23,10 @@ It demonstrates two complementary surfaces over one shared, auditable engine:
 | | |
 |---|---|
 | TRIO Receipt Input + Assistant | ![Receipt Input](docs/screenshots/01-receipt-input.png) |
-| TRIO Assistant answering | ![Assistant](docs/screenshots/02-trio-assistant.png) |
+| TRIO Assistant (welcome + starters) | ![Assistant](docs/screenshots/02-trio-assistant.png) |
+| Assistant expand / focus mode | ![Expanded](docs/screenshots/06-assistant-expanded.png) |
 | Agents module | ![Agents](docs/screenshots/03-agents-module.png) |
-| Water Bills agent outputs | ![Water Bills](docs/screenshots/04-water-bills-outputs.png) |
+| Agent outputs (governor cards) | ![Water Bills](docs/screenshots/04-water-bills-outputs.png) |
 | Code Enforcement agent | ![Code](docs/screenshots/05-code-enforcement.png) |
 
 ## Run it
