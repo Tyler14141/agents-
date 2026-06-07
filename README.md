@@ -18,6 +18,16 @@ It demonstrates two complementary surfaces over one shared, auditable engine:
 > assistant **drafts** work — nothing is posted to TRIO/CAMA without a human **Approve / Edit /
 > Reject**, and every decision is written to the audit log.
 
+## Screenshots
+
+| | |
+|---|---|
+| TRIO Receipt Input + Assistant | ![Receipt Input](docs/screenshots/01-receipt-input.png) |
+| TRIO Assistant answering | ![Assistant](docs/screenshots/02-trio-assistant.png) |
+| Agents module | ![Agents](docs/screenshots/03-agents-module.png) |
+| Water Bills agent outputs | ![Water Bills](docs/screenshots/04-water-bills-outputs.png) |
+| Code Enforcement agent | ![Code](docs/screenshots/05-code-enforcement.png) |
+
 ## Run it
 
 ```bash
