@@ -212,7 +212,12 @@ export type ProposalKind =
   | 'case-triage'
   | 'inspection-prep'
   | 'notice-draft'
-  | 'case-aging';
+  | 'case-aging'
+  // Assessing
+  | 'parcel-brief'
+  | 'exemption-appeal'
+  | 'permit-review'
+  | 'assessment-handoff';
 
 export interface SourceRef {
   system: 'TRIO' | 'CAMA';

@@ -7,6 +7,7 @@ import { managerDailyReport } from './manager';
 import { taxDelinquency, taxCertificates, taxOwnership } from './tax';
 import { clerkAgenda, clerkNotice, clerkRecords } from './clerk';
 import { codeTriage, codeInspections, codeNotices, codeAging } from './code';
+import { assessingParcelBrief, assessingPermitReview, assessingHandoff, assessingExemptionAppeal } from './assessing';
 
 export type Cadence = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly' | 'On demand';
 
@@ -142,8 +143,21 @@ export const AGENTS: AgentDef[] = [
       { id: 'aging', label: 'Case aging & escalation', description: 'Summarize aged cases needing escalation.', cadence: 'Monthly', run: codeAging },
     ],
   },
-  // Mapped from the strategy doc, not yet built out:
-  { role: 'assessing', name: 'Assessing Agent', shortName: 'Assessing', icon: '📐', blurb: 'Parcel briefs, exemption/appeal checklists, assessment-to-tax handoff.', systems: ['Harris CAMA', 'TRIO Tax'], status: 'planned', tasks: [] },
+  {
+    role: 'assessing',
+    name: 'Assessing Agent',
+    shortName: 'Assessing',
+    icon: '📐',
+    blurb: 'Parcel briefs, permit-to-parcel reviews, assessment-to-tax handoff, and exemption/appeal prep.',
+    systems: ['Harris CAMA', 'TRIO Tax'],
+    status: 'active',
+    tasks: [
+      { id: 'parcel-brief', label: 'Parcel briefs', description: 'Consolidated CAMA snapshot per parcel.', cadence: 'On demand', run: assessingParcelBrief },
+      { id: 'permit-review', label: 'Permit-to-parcel review', description: 'Flag open permits that may change value.', cadence: 'Weekly', run: assessingPermitReview },
+      { id: 'handoff', label: 'Assessment-to-tax handoff', description: 'Coordinate ownership/value changes from sales with Tax.', cadence: 'Weekly', run: assessingHandoff },
+      { id: 'exemption-appeal', label: 'Exemption & appeal checklist', description: 'Roll prep, exemptions, and appeal readiness.', cadence: 'Yearly', run: assessingExemptionAppeal },
+    ],
+  },
 ];
 
 export const AGENT_MAP: Record<string, AgentDef> = Object.fromEntries(AGENTS.map((a) => [a.role, a]));

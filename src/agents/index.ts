@@ -23,4 +23,8 @@ export const PROPOSAL_KIND_LABEL: Record<string, string> = {
   'inspection-prep': 'Inspection prep',
   'notice-draft': 'Violation notice',
   'case-aging': 'Case aging',
+  'parcel-brief': 'Parcel brief',
+  'exemption-appeal': 'Exemption / appeal',
+  'permit-review': 'Permit-to-parcel',
+  'assessment-handoff': 'Assessment-to-tax',
 };

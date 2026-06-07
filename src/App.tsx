@@ -1,43 +1,105 @@
 import { useState } from 'react';
-import { ReceiptInputScreen } from './components/ReceiptInputScreen';
 import { TrioAssistant } from './components/TrioAssistant';
 import { AgentsConsole } from './components/AgentsConsole';
+import { TrioModuleView, type TrioModuleDef } from './components/TrioModuleView';
+import { ReceiptInputScreen } from './components/ReceiptInputScreen';
+import { MotorVehicleScreen } from './components/screens/MotorVehicleScreen';
+import { TaxScreen } from './components/screens/TaxScreen';
+import { UtilityScreen } from './components/screens/UtilityScreen';
+import { BudgetaryScreen } from './components/screens/BudgetaryScreen';
 import { useStore } from './store';
 import { MUNICIPALITY } from './data/municipal';
 
-type ModuleId = 'cr' | 'agents' | string;
+type ModuleId = string;
+type Theme = 'modern' | 'classic';
 
 // Left module rail (the thin colored strip of TRIO modules in the screenshots).
 const MODULES = [
   { id: 'cr', label: 'Cash Receipting', icon: 'T', color: '#0f9b8e', active: true },
   { id: 'agents', label: 'Agents', icon: '✦', color: '#6c5ce7', active: true },
-  { id: 'mv', label: 'Motor Vehicle', icon: '🚗', color: '#2e75b6', active: false },
-  { id: 'tax', label: 'Tax', icon: '🧾', color: '#c0392b', active: false },
-  { id: 'ub', label: 'Utility Billing', icon: '💧', color: '#2980b9', active: false },
-  { id: 'pr', label: 'Payroll', icon: '👥', color: '#8e44ad', active: false },
+  { id: 'mv', label: 'Motor Vehicle', icon: '🚗', color: '#2e75b6', active: true },
+  { id: 'tax', label: 'Tax', icon: '🧾', color: '#c0392b', active: true },
+  { id: 'ub', label: 'Utility Billing', icon: '💧', color: '#2980b9', active: true },
+  { id: 'bud', label: 'Budgetary', icon: '💼', color: '#d68910', active: true },
   { id: 'clk', label: 'Clerk', icon: '🗂️', color: '#16a085', active: false },
-  { id: 'bud', label: 'Budgetary', icon: '💼', color: '#d68910', active: false },
   { id: 'cama', label: 'CAMA', icon: '📐', color: '#7f8c8d', active: false },
 ];
 
-const CR_MENU = [
-  { label: 'Receipt Input', active: true },
-  { label: 'Daily Receipt Audit' },
-  { label: 'Printing', section: true },
-  { label: 'Receipt Search', indent: true },
-  { label: 'Receipt Type Listing', indent: true },
-  { label: 'MVR3 Listing', indent: true },
-  { label: 'Redisplay Daily Audit Report', indent: true },
-  { label: 'Redisplay Any Receipt', indent: true },
-  { label: 'Redisplay Last Receipt', indent: true },
-  { label: 'Cross Check Payment Report', indent: true },
-  { label: 'Open Cash Drawer' },
-  { label: 'Type Setup' },
-  { label: 'End Of Year' },
-  { label: 'File Maintenance' },
-];
+function ReceiptSearchScreen() {
+  return (
+    <div className="tr-screen">
+      <div className="tr-screen-head"><h2>Receipt Search</h2></div>
+      <p className="muted" style={{ padding: 12 }}>
+        Search receipts by number, date, payer, or type. (Mockup tab — open <b>Receipt Input</b> or ask the
+        TRIO Assistant to look up an account.)
+      </p>
+    </div>
+  );
+}
 
-type Theme = 'modern' | 'classic';
+const MODULE_DEFS: Record<string, TrioModuleDef> = {
+  cr: {
+    brand: 'CASH RECEIPTING',
+    menu: [
+      { label: 'Receipt Input', active: true }, { label: 'Daily Receipt Audit' },
+      { label: 'Printing', section: true },
+      { label: 'Receipt Search', indent: true }, { label: 'Receipt Type Listing', indent: true },
+      { label: 'MVR3 Listing', indent: true }, { label: 'Redisplay Daily Audit Report', indent: true },
+      { label: 'Redisplay Any Receipt', indent: true }, { label: 'Redisplay Last Receipt', indent: true },
+      { label: 'Cross Check Payment Report', indent: true },
+      { label: 'Open Cash Drawer' }, { label: 'Type Setup' }, { label: 'End Of Year' }, { label: 'File Maintenance' },
+    ],
+    tabs: [
+      { id: 'input', label: 'Receipt Input', color: '#0f9b8e', Screen: ReceiptInputScreen },
+      { id: 'search', label: 'Receipt Search', color: '#c0392b', Screen: ReceiptSearchScreen },
+    ],
+  },
+  mv: {
+    brand: 'MOTOR VEHICLE',
+    menu: [
+      { label: 'Registration Menu' }, { label: 'Process End of Period' }, { label: 'Process BMV Update File' },
+      { label: 'Inventory Maintenance' }, { label: 'Exception Report Items' },
+      { label: 'Printing', section: true },
+      { label: 'MVR3 Preview', indent: true, active: true }, { label: 'Vehicle History', indent: true },
+      { label: 'Table / Option Processing' }, { label: 'Fleet Master Add / Update' }, { label: 'Blue Book' },
+      { label: 'Inventory Status' }, { label: 'Rapid Renewal' }, { label: 'Teller Closeout' }, { label: 'Gift Certificates' },
+    ],
+    tabs: [{ id: 'mvr3', label: 'MVR3 Preview', color: '#2e75b6', Screen: MotorVehicleScreen }],
+  },
+  tax: {
+    brand: 'TAX COLLECTIONS',
+    menu: [
+      { label: 'Account Inquiry', active: true }, { label: 'Payment Entry' }, { label: 'Adjustments' },
+      { label: 'Delinquency' }, { label: 'Tax Liens' },
+      { label: 'Reports', section: true },
+      { label: 'Aging Report', indent: true }, { label: 'Commitment Book', indent: true }, { label: 'Lien Report', indent: true },
+      { label: 'File Maintenance' },
+    ],
+    tabs: [{ id: 'inq', label: 'Account Inquiry', color: '#c0392b', Screen: TaxScreen }],
+  },
+  ub: {
+    brand: 'UTILITY BILLING',
+    menu: [
+      { label: 'Account Inquiry', active: true }, { label: 'Meter Reads' }, { label: 'Billing' },
+      { label: 'Payments' }, { label: 'Delinquency' },
+      { label: 'Reports', section: true },
+      { label: 'Aging Report', indent: true }, { label: 'Consumption Report', indent: true },
+      { label: 'File Maintenance' },
+    ],
+    tabs: [{ id: 'inq', label: 'Account Inquiry', color: '#2980b9', Screen: UtilityScreen }],
+  },
+  bud: {
+    brand: 'BUDGETARY',
+    menu: [
+      { label: 'Account Inquiry' }, { label: 'Budget vs. Actual', active: true }, { label: 'Journal Entries' },
+      { label: 'Requisitions' },
+      { label: 'Reports', section: true },
+      { label: 'Budget Report', indent: true }, { label: 'Trial Balance', indent: true },
+      { label: 'File Maintenance' },
+    ],
+    tabs: [{ id: 'bva', label: 'Budget vs. Actual', color: '#d68910', Screen: BudgetaryScreen }],
+  },
+};
 
 function ThemeToggle({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) => void }) {
   return (
@@ -51,9 +113,10 @@ function ThemeToggle({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) =
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<ModuleId>('cr');
-  const [tab, setTab] = useState<'input' | 'search'>('input');
   const [theme, setTheme] = useState<Theme>('modern');
   const pending = useStore((s) => s.proposals.filter((p) => p.status === 'pending').length);
+  const toggle = <ThemeToggle theme={theme} setTheme={setTheme} />;
+  const moduleDef = MODULE_DEFS[activeModule];
 
   return (
     <div className={`trio theme-${theme}`}>
@@ -76,56 +139,7 @@ export default function App() {
         })}
       </div>
 
-      {activeModule === 'cr' ? (
-        <>
-          {/* Module menu */}
-          <aside className="cr-sidebar">
-            <div className="cr-brand">CASH RECEIPTING</div>
-            <nav>
-              {CR_MENU.map((m) => (
-                <div
-                  key={m.label}
-                  className={`cr-item ${m.active ? 'active' : ''} ${m.section ? 'section' : ''} ${m.indent ? 'indent' : ''}`}
-                >
-                  {m.label}
-                </div>
-              ))}
-            </nav>
-            <div className="cr-user">
-              <div className="who">Logged in as {MUNICIPALITY.user.name.split(' ')[0]}</div>
-              <div className="where">{MUNICIPALITY.user.office}</div>
-            </div>
-          </aside>
-
-          {/* Workspace */}
-          <main className="trio-main">
-            <div className="trio-tabs">
-              <div className={`trio-tab ${tab === 'input' ? 'active' : ''}`} onClick={() => setTab('input')}>
-                <span className="ti">▦</span> Receipt Input <span className="tx">✕</span>
-              </div>
-              <div className={`trio-tab ${tab === 'search' ? 'active' : ''}`} onClick={() => setTab('search')}>
-                <span className="ti red">▦</span> Receipt Search <span className="tx">✕</span>
-              </div>
-              <div className="trio-tabs-spacer" />
-              <ThemeToggle theme={theme} setTheme={setTheme} />
-              <div className="trio-grid-btn">▦</div>
-            </div>
-            <div className="trio-content">
-              {tab === 'input' ? (
-                <ReceiptInputScreen />
-              ) : (
-                <div className="tr-screen">
-                  <div className="tr-screen-head"><h2>Receipt Search</h2></div>
-                  <p className="muted" style={{ padding: 12 }}>
-                    Search receipts by number, date, payer, or type. (Mockup tab — open <b>Receipt Input</b> or ask the
-                    TRIO Assistant to look up an account.)
-                  </p>
-                </div>
-              )}
-            </div>
-          </main>
-        </>
-      ) : (
+      {activeModule === 'agents' ? (
         <main className="trio-main">
           <div className="agents-topbar">
             <span className="agents-topbar-icon">✦</span>
@@ -134,15 +148,17 @@ export default function App() {
               <div className="agents-topbar-sub">Governed operating layer over TRIO + CAMA · {MUNICIPALITY.name}</div>
             </div>
             <div style={{ flex: 1 }} />
-            <ThemeToggle theme={theme} setTheme={setTheme} />
+            {toggle}
           </div>
           <div className="agents-wrap">
             <AgentsConsole />
           </div>
         </main>
+      ) : (
+        <TrioModuleView key={activeModule} def={moduleDef} toggle={toggle} />
       )}
 
-      <TrioAssistant screen={activeModule === 'agents' ? 'Agents module' : tab === 'input' ? 'Cash Receipting · Receipt Input' : 'Cash Receipting · Receipt Search'} />
+      <TrioAssistant screen={activeModule === 'agents' ? 'Agents module' : moduleDef.brand} />
     </div>
   );
 }

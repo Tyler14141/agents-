@@ -82,6 +82,10 @@ Claude API (server-side), passing the same source records as context and returni
 
 ## Roles mapped vs. built
 
-Built out: **Finance, Customer Service, Utility (Water Bills), Payroll, Manager, Tax / Revenue,
-Clerk, Code Enforcement**.
-Mapped from the strategy doc and ready to activate: **Assessing**.
+All nine role agents from the strategy doc are now live: **Finance, Customer Service, Utility (Water
+Bills), Payroll, Manager, Tax / Revenue, Clerk, Code Enforcement, Assessing**.
+
+TRIO screens (clickable from the left module rail): **Cash Receipting** (Receipt Input), **Motor
+Vehicle** (MVR3 Preview), **Tax Collections**, **Utility Billing**, **Budgetary** — plus the
+**Agents** module. A **Classic / Modern** interface toggle switches between the original flat TRIO
+mockup and the polished UI.
