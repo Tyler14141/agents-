@@ -29,6 +29,9 @@ export interface Reply {
   steps: string[];
   turns: Turn[];
   followups: string[];
+  /** True when a specific TRIO intent matched. When false (free-form), the
+   *  UI routes the question to the live Claude API if it is configured. */
+  matched: boolean;
 }
 
 export interface AssistantContext {
@@ -58,7 +61,7 @@ function usd(n: number) {
 
 const t = (text: string): Turn => ({ kind: 'text', text });
 const p = (proposal: AgentProposal): Turn => ({ kind: 'proposal', proposal });
-const reply = (steps: string[], turns: Turn[], followups: string[] = []): Reply => ({ steps, turns, followups });
+const reply = (steps: string[], turns: Turn[], followups: string[] = [], matched = true): Reply => ({ steps, turns, followups, matched });
 
 // ---- lookups -------------------------------------------------------------
 
@@ -112,7 +115,7 @@ const TOPIC_TO_INQUIRY: { keywords: string[]; id: string }[] = [
 
 export function respond(input: string, _ctx: AssistantContext): Reply {
   const q = input.trim().toLowerCase();
-  if (!q) return reply([], [t("I didn't catch that — try “help” to see what I can do.")]);
+  if (!q) return reply([], [t("I didn't catch that — try “help” to see what I can do.")], [], false);
 
   // help
   if (q.includes('help') || q === '?' || q.includes('what can you')) {
@@ -167,7 +170,7 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
         ['Draft a reply to this resident', 'What needs attention today?'],
       );
     }
-    return reply([], [t(`I couldn't find an account matching “${query}”. Try a name (e.g. “Maria Delgado”) or an account # (U-5013, T-3090, R-1002).`)]);
+    return reply([], [t(`I couldn't find an account matching “${query}”. Try a name (e.g. “Maria Delgado”) or an account # (U-5013, T-3090, R-1002).`)], [], false);
   }
 
   // exceptions / attention
@@ -184,7 +187,7 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
   }
 
   // variance / budget
-  if (q.includes('variance') || q.includes('budget') || q.includes('over') || q.includes('overspend') || q.includes('account')) {
+  if (q.includes('variance') || q.includes('budget') || q.includes('overspend')) {
     const props = financeProposals(['variance-explanation']).filter((x) => x.title.startsWith('Over budget'));
     if (props.length) {
       return reply(
@@ -251,19 +254,20 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
         );
       }
     }
-    return reply([], [t('Which topic? I can draft a reply about: the high water bill, a payment plan / shutoff, vehicle registration, a move-out / final bill, or a tax lien.')], ['Draft a reply about the high water bill', 'Draft a reply about a payment plan']);
+    return reply([], [t('Which topic? I can draft a reply about: the high water bill, a payment plan / shutoff, vehicle registration, a move-out / final bill, or a tax lien.')], ['Draft a reply about the high water bill', 'Draft a reply about a payment plan'], false);
   }
 
   // greeting
-  if (q.includes('hi') || q.includes('hello') || q.includes('hey') || q.includes('thanks') || q.includes('thank you')) {
-    return reply([], [t('Happy to help. Ask me to look something up, summarize what needs attention, or draft a reply or memo.')], ['What needs attention today?', 'Look up Maria Delgado']);
+  if (q === 'hi' || q === 'hello' || q === 'hey' || q.includes('thank')) {
+    return reply([], [t('Happy to help. Ask me to look something up, summarize what needs attention, or draft a reply or memo.')], ['What needs attention today?', 'Look up Maria Delgado'], false);
   }
 
-  // fallback
+  // fallback — free-form question; routed to the live Claude API when configured.
   return reply(
     [],
     [t(`I'm not sure how to handle that yet. I'm strongest at: account lookups, exception/variance summaries, close checklists, council briefings, and knowledge-grounded resident replies. Type “help” for examples.`)],
     ['What needs attention today?', 'Triage the inquiries'],
+    false,
   );
 }
 

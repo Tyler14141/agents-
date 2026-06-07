@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { respond, STARTERS, WELCOME, greetingStats, type Turn } from '../assistant/respond';
+import { askLLM, checkHealth, type ChatMessage } from '../assistant/llm';
 import { useStore } from '../store';
 import { ProposalCard } from './ProposalCard';
 
@@ -11,6 +12,24 @@ type ChatItem =
 
 let cid = 0;
 const nid = () => `c-${cid++}`;
+
+// Build Claude-style conversation history from the chat transcript (merging
+// consecutive same-role turns and dropping any leading assistant turn).
+function itemsToMessages(items: ChatItem[]): ChatMessage[] {
+  const msgs: ChatMessage[] = [];
+  for (const it of items) {
+    let role: 'user' | 'assistant';
+    let content: string;
+    if (it.role === 'user') { role = 'user'; content = it.text; }
+    else if (it.role === 'text') { role = 'assistant'; content = it.text; }
+    else continue;
+    const last = msgs[msgs.length - 1];
+    if (last && last.role === role) last.content += '\n\n' + content;
+    else msgs.push({ role, content });
+  }
+  while (msgs.length && msgs[0].role === 'assistant') msgs.shift();
+  return msgs.slice(-12);
+}
 
 // ---- streaming + steps animation helpers ---------------------------------
 
@@ -72,30 +91,55 @@ export function TrioAssistant({ screen }: { screen: string }) {
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const [followups, setFollowups] = useState<string[]>([]);
+  const [live, setLive] = useState(false);
   const addProposals = useStore((s) => s.addProposals);
   const pendingCount = useStore((s) => s.proposals.filter((p) => p.status === 'pending').length);
   const bodyRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    checkHealth().then((h) => setLive(Boolean(h?.configured)));
+  }, []);
+
+  useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' });
   }, [items, thinking, open, expanded]);
 
-  function send(raw: string) {
+  async function send(raw: string) {
     const text = raw.trim();
     if (!text || thinking) return;
+    const history = itemsToMessages(items);
     setItems((prev) => [...prev, { id: nid(), role: 'user', text }]);
     setInput('');
     setFollowups([]);
     setThinking(true);
 
     const r = respond(text, { screen });
-    const stepsMs = r.steps.length ? 500 + r.steps.length * 300 + 400 : 480;
 
+    // Free-form question + live Claude API configured -> real model answer.
+    if (live && !r.matched) {
+      setItems((prev) => [...prev, { id: nid(), role: 'steps', steps: ['Reading systems of record', 'Reasoning over TRIO + CAMA data', 'Composing answer'] }]);
+      try {
+        const answer = await askLLM([...history, { role: 'user', content: text }]);
+        setItems((prev) => [...prev, { id: nid(), role: 'text', text: answer }]);
+      } catch (e) {
+        setItems((prev) => [
+          ...prev,
+          { id: nid(), role: 'text', text: `(Live AI unavailable: ${(e as Error).message}) Here's what I can do in demo mode:` },
+          ...r.turns.filter((tn): tn is Extract<Turn, { kind: 'text' }> => tn.kind === 'text').map((tn) => ({ id: nid(), role: 'text' as const, text: tn.text })),
+        ]);
+      } finally {
+        setThinking(false);
+        taRef.current?.focus();
+      }
+      return;
+    }
+
+    // Deterministic TRIO intent (keeps the governed draft/approval flow).
+    const stepsMs = r.steps.length ? 500 + r.steps.length * 300 + 400 : 480;
     if (r.steps.length) {
       setItems((prev) => [...prev, { id: nid(), role: 'steps', steps: r.steps }]);
     }
-
     window.setTimeout(() => {
       const next: ChatItem[] = [];
       for (const turn of r.turns as Turn[]) {
@@ -140,8 +184,8 @@ export function TrioAssistant({ screen }: { screen: string }) {
         <div className="assistant-head">
           <div className="assistant-avatar"><span className="spark">✦</span></div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="assistant-title">TRIO Assistant <span className="ai-pill">AI</span></div>
-            <div className="assistant-sub"><span className="online-dot" /> Governed · {pendingCount} awaiting approval</div>
+            <div className="assistant-title">TRIO Assistant <span className={`ai-pill ${live ? 'liveai' : ''}`}>{live ? 'Live AI' : 'Demo'}</span></div>
+            <div className="assistant-sub"><span className={`online-dot ${live ? '' : 'demo'}`} /> Governed · {pendingCount} awaiting approval</div>
           </div>
           <button className="assistant-iconbtn" title="New chat" onClick={() => { setItems([]); setFollowups([]); }}>↺</button>
           <button className="assistant-iconbtn" title={expanded ? 'Collapse' : 'Expand'} onClick={() => setExpanded((v) => !v)}>{expanded ? '⤡' : '⤢'}</button>

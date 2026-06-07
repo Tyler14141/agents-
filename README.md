@@ -40,6 +40,22 @@ npm run build && npm run preview
 
 No API keys or network required — it's a self-contained interactive demo.
 
+### Live AI mode (real Claude answers)
+
+By default the TRIO Assistant runs in deterministic **Demo** mode (no key needed). To let it answer
+free-form questions for real, point it at the Claude API:
+
+```bash
+cp .env.example .env          # then put your key in .env:  ANTHROPIC_API_KEY=sk-ant-...
+npm run dev:ai                # runs the key-holding proxy + the web app together
+```
+
+Open the app and the assistant header flips from **Demo** to **Live AI**. Known commands (triage,
+draft, council briefing, exception summary…) still produce the governed Approve/Edit/Reject drafts;
+anything free-form is answered by Claude, grounded in the mock TRIO/CAMA data. The API key lives only
+in the local proxy (`server/index.mjs`) — it is never shipped to the browser. Set `CLAUDE_MODEL` to
+change the model (default `claude-sonnet-4-6`).
+
 ## Try this
 
 - Open the app on the **Cash Receipting · Receipt Input** screen. Click the **TRIO Assistant**
