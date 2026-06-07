@@ -475,3 +475,115 @@ table.data tr:last-child td { border-bottom: none; }
 .cadence { font-size: 10.5px; font-weight: 600; color: #6c5ce7; background: #efeaff; border-radius: 10px; padding: 1px 8px; }
 .task-desc { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
 .task-result { font-size: 12px; color: var(--green-dark); margin-top: 6px; }
+
+/* ===================================================================== */
+/* Modern polish layer — cohesive design language across the whole app    */
+/* ===================================================================== */
+
+:root {
+  --r-card: 14px;
+  --r-input: 10px;
+  --shadow-sm: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  --shadow-md: 0 4px 16px rgba(16,24,40,.08);
+  --shadow-lg: 0 12px 36px rgba(16,24,40,.14);
+  --line: #e6e9ef;
+  --ai-1: #6c5ce7;
+  --ai-2: #0f9b8e;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, .section-title { letter-spacing: -0.012em; }
+::selection { background: rgba(108,92,231,.18); }
+
+/* Refined scrollbars */
+.assistant-body, .ad-body, .trio-content, .agents-roster, .cr-sidebar, .module-rail {
+  scrollbar-width: thin; scrollbar-color: #c7ccd6 transparent;
+}
+.assistant-body::-webkit-scrollbar, .ad-body::-webkit-scrollbar, .trio-content::-webkit-scrollbar,
+.agents-roster::-webkit-scrollbar { width: 8px; height: 8px; }
+.assistant-body::-webkit-scrollbar-thumb, .ad-body::-webkit-scrollbar-thumb,
+.trio-content::-webkit-scrollbar-thumb, .agents-roster::-webkit-scrollbar-thumb {
+  background: #d4d8e0; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box;
+}
+.assistant-body::-webkit-scrollbar-thumb:hover { background: #b9bfca; }
+
+/* Buttons */
+.btn { border-radius: 9px; transition: background .12s, box-shadow .12s, transform .08s, border-color .12s; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { box-shadow: 0 2px 8px rgba(15,155,142,.28); }
+.btn-primary:hover { box-shadow: 0 4px 14px rgba(15,155,142,.36); }
+.btn-green { box-shadow: 0 2px 8px rgba(56,176,106,.28); }
+.btn-green:hover { box-shadow: 0 4px 14px rgba(56,176,106,.36); }
+
+.card { border-radius: var(--r-card); border-color: var(--line); box-shadow: var(--shadow-sm); }
+
+/* ---- Module rail ---- */
+.module-rail { background: linear-gradient(180deg,#1f2731,#171d25); padding: 10px 0; gap: 9px; }
+.rail-icon { width: 38px; height: 38px; border-radius: 11px; transition: transform .12s, box-shadow .12s, background .12s;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+.rail-icon:not(.mock):hover { transform: translateY(-1px); }
+.rail-icon.active { box-shadow: 0 6px 16px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.25); }
+
+/* ---- Cash Receipting sidebar ---- */
+.cr-sidebar { background: linear-gradient(180deg,#2b3440,#252e39); }
+.cr-brand { font-weight: 600; letter-spacing: .08em; }
+.cr-item { transition: background .12s, color .12s; border-radius: 0 8px 8px 0; margin-right: 8px; }
+.cr-item.active { box-shadow: inset 0 0 0 1px rgba(15,155,142,.25); }
+
+/* ---- TRIO tabs ---- */
+.trio-tabs { background: #eef1f5; padding-top: 2px; }
+.trio-tab { border-radius: 10px 10px 0 0; transition: background .12s, color .12s; box-shadow: none; }
+.trio-tab.active { box-shadow: 0 -1px 0 var(--teal) inset; }
+
+/* ---- Receipt Input screen ---- */
+.trio-content { padding: 24px 28px; }
+.tr-screen { border-radius: 16px; box-shadow: var(--shadow-md); border-color: var(--line); padding: 24px 26px; }
+.tr-screen-head h2 { font-weight: 700; }
+.tr-select, .tr-paidby input, .tr-amount {
+  border-radius: var(--r-input); transition: border-color .12s, box-shadow .12s;
+}
+.tr-select:focus, .tr-paidby input:focus, .tr-amount:focus {
+  outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,155,142,.12);
+}
+.tr-trans th { background: #f6f8fb; }
+.tr-trans tbody tr:hover { background: #fafbfc; }
+.tr-totals, .tr-payment { background: #fbfcfe; border-radius: 12px; }
+.tr-total.strong { border-color: var(--line); }
+.tr-save .btn { border-radius: 11px; box-shadow: 0 6px 18px rgba(56,176,106,.32); }
+.tr-save .btn:hover { transform: translateY(-1px); }
+
+/* ---- Agents module ---- */
+.agents-topbar { box-shadow: var(--shadow-sm); }
+.agents-topbar-icon { background: linear-gradient(135deg,var(--ai-1),var(--ai-2)); box-shadow: 0 6px 16px rgba(108,92,231,.3); }
+
+.agents-roster { padding: 10px; }
+.roster-item { border-radius: 11px; transition: background .12s, box-shadow .12s, transform .08s; border: 1px solid transparent; margin-bottom: 2px; }
+.roster-item:hover { background: #f5f6f9; }
+.roster-item.active { background: #efeaff; border-color: #e0d9fb; box-shadow: 0 2px 8px rgba(108,92,231,.1); }
+.roster-item.active .ri-icon { background: linear-gradient(135deg,var(--ai-1),var(--ai-2)); color: #fff; }
+.ri-icon { transition: background .12s, color .12s; }
+
+.ad-head { background: linear-gradient(180deg,#ffffff,#fbfaff); }
+.ad-icon { background: linear-gradient(135deg,#efeaff,#e3f4f2); box-shadow: inset 0 0 0 1px rgba(108,92,231,.12); }
+.ad-head h2 { font-weight: 700; }
+.ad-systems span { background: #f1f3f8; border: 1px solid var(--line); }
+
+.task-card { border-radius: 14px; transition: border-color .12s, box-shadow .12s, transform .08s; }
+.task-card:hover { border-color: #cfd5e0; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.cadence { background: #efeaff; color: #5a4bd0; }
+
+/* Card / proposal refinements */
+.proposal { border-radius: var(--r-card); }
+.draft-box { border-radius: 10px; background: #fafbfd; }
+.kind-tag { background: #efeaff; color: #5a4bd0; }
+
+/* Governance banner refresh */
+.governance-banner { border-radius: 12px; background: linear-gradient(90deg,#eef9f2,#eef1fe); border-color: #cfe9d8; }
+
+/* Subtle fade-in for content panes */
+.trio-content > .tr-screen, .agents-console { animation: rise .22s ease; }
