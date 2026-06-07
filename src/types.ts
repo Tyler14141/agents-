@@ -131,6 +131,42 @@ export interface Inquiry {
   status: 'new' | 'triaged' | 'resolved';
 }
 
+// ---- Clerk records ----
+
+export interface AgendaSubmission {
+  id: string;
+  department: string;
+  title: string;
+  type: 'ordinance' | 'contract' | 'appointment' | 'budget' | 'other';
+  submittedBy: string;
+  receivedAt: string;
+  needsVote: boolean;
+}
+
+export interface RecordsRequest {
+  id: string;
+  requester: string;
+  receivedAt: string;
+  dueBy: string;
+  subject: string;
+  status: 'new' | 'in-progress' | 'overdue';
+  assignedTo?: string;
+}
+
+// ---- Code enforcement ----
+
+export interface CodeCase {
+  id: string;
+  status: 'complaint' | 'open' | 'notice-sent' | 'resolved';
+  address: string;
+  parcelId?: string;
+  type: string;
+  description: string;
+  openedAt: string;
+  lastActivity: string;
+  ageDays: number;
+}
+
 /** Approved, human-governed knowledge the agents may draw answers from. */
 export interface KnowledgeArticle {
   id: string;
@@ -163,7 +199,20 @@ export type ProposalKind =
   | 'payroll-exception'
   | 'payroll-checklist'
   // Manager / cross-office
-  | 'report';
+  | 'report'
+  // Clerk
+  | 'agenda-packet'
+  | 'public-notice'
+  | 'records-triage'
+  // Tax / Revenue
+  | 'delinquency-notice'
+  | 'tax-certificate'
+  | 'ownership-change'
+  // Code Enforcement
+  | 'case-triage'
+  | 'inspection-prep'
+  | 'notice-draft'
+  | 'case-aging';
 
 export interface SourceRef {
   system: 'TRIO' | 'CAMA';

@@ -71,5 +71,6 @@ Claude API (server-side), passing the same source records as context and returni
 
 ## Roles mapped vs. built
 
-Built out: **Finance, Customer Service, Utility (Water Bills), Payroll, Manager**.
-Mapped from the strategy doc and ready to activate: **Clerk, Tax, Code Enforcement, Assessing**.
+Built out: **Finance, Customer Service, Utility (Water Bills), Payroll, Manager, Tax / Revenue,
+Clerk, Code Enforcement**.
+Mapped from the strategy doc and ready to activate: **Assessing**.

@@ -1,10 +1,13 @@
 import type {
+  AgendaSubmission,
   BudgetLine,
+  CodeCase,
   Exception,
   Inquiry,
   KnowledgeArticle,
   Parcel,
   Receipt,
+  RecordsRequest,
   Resident,
   TaxAccount,
   UtilityAccount,
@@ -360,4 +363,38 @@ export const KNOWLEDGE: KnowledgeArticle[] = [
     approvedBy: 'Treasurer',
     lastReviewed: '2026-02-15',
   },
+];
+
+// ---- Clerk: meeting agenda + records requests --------------------------
+
+export const NEXT_MEETING = {
+  body: 'Town Council',
+  date: '2026-06-15',
+  noticeDueBy: '2026-06-11',
+  location: 'Council Chambers, 12 Second Street',
+};
+
+export const AGENDA_SUBMISSIONS: AgendaSubmission[] = [
+  { id: 'AG-01', department: 'Finance', title: 'FY2027 budget first reading', type: 'budget', submittedBy: 'B. Caron', receivedAt: '2026-06-04', needsVote: true },
+  { id: 'AG-02', department: 'Public Works', title: 'Award salt/sand supply contract', type: 'contract', submittedBy: 'D. Plourde', receivedAt: '2026-06-05', needsVote: true },
+  { id: 'AG-03', department: 'Administration', title: 'Reappoint planning board member', type: 'appointment', submittedBy: 'Town Manager', receivedAt: '2026-06-05', needsVote: true },
+  { id: 'AG-04', department: 'Code Enforcement', title: 'Amend nuisance ordinance §7', type: 'ordinance', submittedBy: 'CEO', receivedAt: '2026-06-06', needsVote: true },
+  { id: 'AG-05', department: 'Recreation', title: 'Summer program update (informational)', type: 'other', submittedBy: 'Rec Dir.', receivedAt: '2026-06-03', needsVote: false },
+];
+
+export const RECORDS_REQUESTS: RecordsRequest[] = [
+  { id: 'FOAA-114', requester: 'Star-Herald (press)', receivedAt: '2026-06-02', dueBy: '2026-06-08', subject: 'Council meeting minutes & PW overtime records, Jan–May', status: 'in-progress', assignedTo: 'Clerk' },
+  { id: 'FOAA-115', requester: 'Attorney — Levesque', receivedAt: '2026-05-28', dueBy: '2026-06-05', subject: 'Deed and tax history for parcel 09-D-31', status: 'overdue', assignedTo: 'Clerk' },
+  { id: 'FOAA-116', requester: 'Resident — M. Delgado', receivedAt: '2026-06-06', dueBy: '2026-06-12', subject: 'Water billing records for 14 Spruce Lane', status: 'new' },
+  { id: 'FOAA-117', requester: 'Northern Maine Realty LLC', receivedAt: '2026-06-06', dueBy: '2026-06-13', subject: 'Code enforcement file for 120 Main Street', status: 'new' },
+];
+
+// ---- Code Enforcement: cases ------------------------------------------
+
+export const CODE_CASES: CodeCase[] = [
+  { id: 'CE-2026-051', status: 'complaint', address: '22 Blake Street', type: 'Junk/debris', description: 'Neighbor complaint: accumulation of junk vehicles and debris in side yard.', openedAt: '2026-06-06', lastActivity: '2026-06-06', ageDays: 1 },
+  { id: 'CE-2026-052', status: 'complaint', address: '9 Hardy Street', type: 'Tall grass/weeds', description: 'Online complaint: grass/weeds well over ordinance height limit.', openedAt: '2026-06-05', lastActivity: '2026-06-05', ageDays: 2 },
+  { id: 'CE-2026-039', status: 'open', address: '120 Main Street', parcelId: '09-D-31', type: 'Unsafe structure', description: 'Vacant commercial building; broken windows and unsecured entry. Inspection needed.', openedAt: '2026-05-12', lastActivity: '2026-05-30', ageDays: 26 },
+  { id: 'CE-2026-031', status: 'open', address: '7 Academy Street', parcelId: '02-C-19', type: 'Property maintenance', description: 'Peeling paint and failing porch rail; prior verbal notice given.', openedAt: '2026-04-28', lastActivity: '2026-05-20', ageDays: 40 },
+  { id: 'CE-2026-018', status: 'notice-sent', address: '15 Chapman Road', type: 'Zoning', description: 'Home business exceeding permitted scope; formal notice sent, compliance deadline passed.', openedAt: '2026-03-30', lastActivity: '2026-05-18', ageDays: 69 },
 ];

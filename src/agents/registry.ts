@@ -4,6 +4,9 @@ import { csTriage, csReplies, csContext } from './customerService';
 import { utilityHighUsage, utilityDelinquency, utilityFinalBills } from './utility';
 import { payrollPreRun, payrollExceptionScan, payrollYearEnd } from './payroll';
 import { managerDailyReport } from './manager';
+import { taxDelinquency, taxCertificates, taxOwnership } from './tax';
+import { clerkAgenda, clerkNotice, clerkRecords } from './clerk';
+import { codeTriage, codeInspections, codeNotices, codeAging } from './code';
 
 export type Cadence = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly' | 'On demand';
 
@@ -96,10 +99,50 @@ export const AGENTS: AgentDef[] = [
       { id: 'daily-report', label: 'Cross-office daily report', description: 'Consolidate exceptions, inquiries, receivables, and budget into one briefing.', cadence: 'Daily', run: managerDailyReport },
     ],
   },
+  {
+    role: 'tax',
+    name: 'Tax / Revenue Agent',
+    shortName: 'Tax',
+    icon: '🧾',
+    blurb: 'Delinquency notices, tax certificate prep, and ownership-change checklists.',
+    systems: ['TRIO Tax Billing & Collections', 'CAMA'],
+    status: 'active',
+    tasks: [
+      { id: 'delinquency', label: 'Delinquency notices', description: 'Draft notices for overdue tax accounts.', cadence: 'Weekly', run: taxDelinquency },
+      { id: 'certificates', label: 'Tax certificate prep', description: 'Prepare payoff/redemption worksheets for lien accounts.', cadence: 'On demand', run: taxCertificates },
+      { id: 'ownership', label: 'Ownership-change review', description: 'Checklist billing/ownership updates from recent recorded sales.', cadence: 'Daily', run: taxOwnership },
+    ],
+  },
+  {
+    role: 'clerk',
+    name: 'Clerk Agent',
+    shortName: 'Clerk',
+    icon: '🗂️',
+    blurb: 'Agenda/packet assembly, public-notice drafting, and records-request triage.',
+    systems: ['TRIO Clerk', 'Cash Receipts'],
+    status: 'active',
+    tasks: [
+      { id: 'agenda', label: 'Assemble agenda & packet', description: 'Build a draft agenda/packet from department submissions.', cadence: 'Weekly', run: clerkAgenda },
+      { id: 'notice', label: 'Draft public notice', description: 'Draft the statutory meeting notice for posting.', cadence: 'Weekly', run: clerkNotice },
+      { id: 'records', label: 'Records-request triage', description: 'Triage and deadline-sort open public-records requests.', cadence: 'Daily', run: clerkRecords },
+    ],
+  },
+  {
+    role: 'code',
+    name: 'Code Enforcement Agent',
+    shortName: 'Code',
+    icon: '🏗️',
+    blurb: 'Complaint-to-case triage, inspection prep, notice drafting, and case aging.',
+    systems: ['TRIO Code Enforcement', 'CAMA'],
+    status: 'active',
+    tasks: [
+      { id: 'triage', label: 'Complaint-to-case triage', description: 'Convert new complaints into classified, routed cases.', cadence: 'Daily', run: codeTriage },
+      { id: 'inspections', label: 'Inspection prep packets', description: 'Generate field packets for open cases.', cadence: 'Weekly', run: codeInspections },
+      { id: 'notices', label: 'Violation notices', description: 'Draft notices for cases past their deadline.', cadence: 'On demand', run: codeNotices },
+      { id: 'aging', label: 'Case aging & escalation', description: 'Summarize aged cases needing escalation.', cadence: 'Monthly', run: codeAging },
+    ],
+  },
   // Mapped from the strategy doc, not yet built out:
-  { role: 'clerk', name: 'Clerk Agent', shortName: 'Clerk', icon: '🗂️', blurb: 'Agenda/packet assembly, notice drafting, records-request triage.', systems: ['TRIO Clerk', 'Cash Receipts'], status: 'planned', tasks: [] },
-  { role: 'tax', name: 'Tax / Revenue Agent', shortName: 'Tax', icon: '🧾', blurb: 'Delinquency notices, tax certificates, ownership-change checklists.', systems: ['TRIO Tax Billing & Collections', 'CAMA'], status: 'planned', tasks: [] },
-  { role: 'code', name: 'Code Enforcement Agent', shortName: 'Code', icon: '🏗️', blurb: 'Complaint-to-case triage, inspection prep, notice drafting.', systems: ['TRIO Code Enforcement', 'CAMA'], status: 'planned', tasks: [] },
   { role: 'assessing', name: 'Assessing Agent', shortName: 'Assessing', icon: '📐', blurb: 'Parcel briefs, exemption/appeal checklists, assessment-to-tax handoff.', systems: ['Harris CAMA', 'TRIO Tax'], status: 'planned', tasks: [] },
 ];
 
