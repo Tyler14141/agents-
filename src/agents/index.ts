@@ -1,0 +1,16 @@
+export const PROPOSAL_KIND_LABEL: Record<string, string> = {
+  'inquiry-triage': 'Inquiry triage',
+  'scripted-answer': 'Reply draft',
+  'issue-summary': 'Handoff summary',
+  'resident-context': 'Resident context',
+  'variance-explanation': 'Variance explanation',
+  'exception-summary': 'Exception summary',
+  'close-checklist': 'Close checklist',
+  'council-memo': 'Council briefing',
+  'utility-exception': 'Usage exception',
+  'utility-collections': 'Collections / shutoff',
+  'utility-final-bill': 'Final bill',
+  'payroll-exception': 'Payroll exception',
+  'payroll-checklist': 'Payroll checklist',
+  report: 'Report',
+};
