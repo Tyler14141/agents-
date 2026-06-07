@@ -628,3 +628,13 @@ table.data tr:last-child td { border-bottom: none; }
 .usage-period { font-size: 10px; color: var(--muted); }
 
 @media (max-width: 1000px) { .mod-split, .mv-grid { grid-template-columns: 1fr; } .mv-fees { border-left: none; padding-left: 0; } }
+
+/* ---- Receipt Search ---- */
+.rs-filters { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.rs-field { display: flex; flex-direction: column; gap: 4px; }
+.rs-field.rs-grow { flex: 1; min-width: 220px; }
+.rs-field label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.rs-field input, .rs-field select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; background: #fff; }
+.rs-field input:focus, .rs-field select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,155,142,.12); }
+.rs-summary { display: flex; gap: 18px; padding: 8px 12px; margin-bottom: 12px; background: #f6f8fb; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--muted); }
+.rs-summary b { color: var(--ink); }

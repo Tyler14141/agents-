@@ -237,6 +237,15 @@ export const RECEIPTS: Receipt[] = [
   { id: 'RC-9003', residentId: 'R-1005', date: '2026-06-04', module: 'Tax', description: 'Property tax installment', amount: 1028.5, tender: 'Credit' },
   { id: 'RC-9004', residentId: 'R-1003', date: '2026-06-02', module: 'Cash Receipts', description: 'Dog license renewal', amount: 11.0, tender: 'Cash' },
   { id: 'RC-9005', date: '2026-06-02', module: 'Cash Receipts', description: 'Transfer station permit', amount: 25.0, tender: 'Cash' },
+  { id: 'RC-9006', residentId: 'R-1003', date: '2026-06-06', module: 'Tax', description: 'Property tax — partial payment', amount: 500.0, tender: 'Check' },
+  { id: 'RC-9007', residentId: 'R-1002', date: '2026-06-06', module: 'Cash Receipts', description: 'Building permit BP-2026-041 (deck)', amount: 75.0, tender: 'Credit' },
+  { id: 'RC-9008', date: '2026-06-05', module: 'Cash Receipts', description: 'Vital records — birth certificate copy', amount: 15.0, tender: 'Cash' },
+  { id: 'RC-9009', residentId: 'R-1004', date: '2026-06-03', module: 'Tax', description: 'Lien redemption — parcel 09-D-31', amount: 1500.0, tender: 'Check' },
+  { id: 'RC-9010', residentId: 'R-1005', date: '2026-06-03', module: 'Utility', description: 'Utility final-bill payment U-5015', amount: 27.9, tender: 'Cash' },
+  { id: 'RC-9011', date: '2026-06-03', module: 'Cash Receipts', description: 'Boat registration', amount: 47.0, tender: 'Credit' },
+  { id: 'RC-9012', residentId: 'R-1001', date: '2026-06-01', module: 'Cash Receipts', description: 'Motor Vehicle re-registration', amount: 92.0, tender: 'Check' },
+  { id: 'RC-9013', date: '2026-06-01', module: 'Cash Receipts', description: 'Dog license — new', amount: 11.0, tender: 'Cash' },
+  { id: 'RC-9014', residentId: 'R-1002', date: '2026-05-29', module: 'Utility', description: 'Utility payment on account U-5013', amount: 60.0, tender: 'Credit' },
 ];
 
 // Budgetary — selected General Fund lines with budget-to-actual at ~92% of FY.

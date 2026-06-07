@@ -3,6 +3,7 @@ import { TrioAssistant } from './components/TrioAssistant';
 import { AgentsConsole } from './components/AgentsConsole';
 import { TrioModuleView, type TrioModuleDef } from './components/TrioModuleView';
 import { ReceiptInputScreen } from './components/ReceiptInputScreen';
+import { ReceiptSearchScreen } from './components/screens/ReceiptSearchScreen';
 import { MotorVehicleScreen } from './components/screens/MotorVehicleScreen';
 import { TaxScreen } from './components/screens/TaxScreen';
 import { UtilityScreen } from './components/screens/UtilityScreen';
@@ -24,18 +25,6 @@ const MODULES = [
   { id: 'clk', label: 'Clerk', icon: '🗂️', color: '#16a085', active: false },
   { id: 'cama', label: 'CAMA', icon: '📐', color: '#7f8c8d', active: false },
 ];
-
-function ReceiptSearchScreen() {
-  return (
-    <div className="tr-screen">
-      <div className="tr-screen-head"><h2>Receipt Search</h2></div>
-      <p className="muted" style={{ padding: 12 }}>
-        Search receipts by number, date, payer, or type. (Mockup tab — open <b>Receipt Input</b> or ask the
-        TRIO Assistant to look up an account.)
-      </p>
-    </div>
-  );
-}
 
 const MODULE_DEFS: Record<string, TrioModuleDef> = {
   cr: {
