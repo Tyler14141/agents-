@@ -477,113 +477,111 @@ table.data tr:last-child td { border-bottom: none; }
 .task-result { font-size: 12px; color: var(--green-dark); margin-top: 6px; }
 
 /* ===================================================================== */
-/* Modern polish layer — cohesive design language across the whole app    */
+/* Interface theme toggle (Classic = original TRIO mockup, Modern = polish) */
 /* ===================================================================== */
-
 :root {
   --r-card: 14px;
   --r-input: 10px;
   --shadow-sm: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
   --shadow-md: 0 4px 16px rgba(16,24,40,.08);
   --shadow-lg: 0 12px 36px rgba(16,24,40,.14);
-  --line: #e6e9ef;
   --ai-1: #6c5ce7;
   --ai-2: #0f9b8e;
 }
+::selection { background: rgba(108,92,231,.18); }
 
-body {
+.theme-toggle { display: inline-flex; align-items: center; gap: 2px; background: #e7ebf1; border: 1px solid var(--line); border-radius: 9px; padding: 3px; margin-right: 8px; }
+.theme-toggle-label { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 0 8px 0 4px; }
+.theme-toggle button { border: none; background: none; padding: 5px 12px; font-size: 12.5px; font-weight: 600; border-radius: 7px; color: var(--muted); cursor: pointer; }
+.theme-toggle button:hover { color: var(--ink); }
+.theme-toggle button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(16,24,40,.1); }
+.theme-modern .theme-toggle button.active { color: #5a4bd0; }
+
+/* ===================================================================== */
+/* Modern polish layer — scoped to .theme-modern only                     */
+/* ===================================================================== */
+.theme-modern {
+  --line: #e6e9ef;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
-h1, h2, h3, .section-title { letter-spacing: -0.012em; }
-::selection { background: rgba(108,92,231,.18); }
+.theme-modern h1, .theme-modern h2, .theme-modern h3, .theme-modern .section-title { letter-spacing: -0.012em; }
 
 /* Refined scrollbars */
-.assistant-body, .ad-body, .trio-content, .agents-roster, .cr-sidebar, .module-rail {
+.theme-modern .assistant-body, .theme-modern .ad-body, .theme-modern .trio-content,
+.theme-modern .agents-roster, .theme-modern .cr-sidebar, .theme-modern .module-rail {
   scrollbar-width: thin; scrollbar-color: #c7ccd6 transparent;
 }
-.assistant-body::-webkit-scrollbar, .ad-body::-webkit-scrollbar, .trio-content::-webkit-scrollbar,
-.agents-roster::-webkit-scrollbar { width: 8px; height: 8px; }
-.assistant-body::-webkit-scrollbar-thumb, .ad-body::-webkit-scrollbar-thumb,
-.trio-content::-webkit-scrollbar-thumb, .agents-roster::-webkit-scrollbar-thumb {
+.theme-modern .assistant-body::-webkit-scrollbar, .theme-modern .ad-body::-webkit-scrollbar,
+.theme-modern .trio-content::-webkit-scrollbar, .theme-modern .agents-roster::-webkit-scrollbar { width: 8px; height: 8px; }
+.theme-modern .assistant-body::-webkit-scrollbar-thumb, .theme-modern .ad-body::-webkit-scrollbar-thumb,
+.theme-modern .trio-content::-webkit-scrollbar-thumb, .theme-modern .agents-roster::-webkit-scrollbar-thumb {
   background: #d4d8e0; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box;
 }
-.assistant-body::-webkit-scrollbar-thumb:hover { background: #b9bfca; }
 
 /* Buttons */
-.btn { border-radius: 9px; transition: background .12s, box-shadow .12s, transform .08s, border-color .12s; }
-.btn:active { transform: translateY(1px); }
-.btn-primary { box-shadow: 0 2px 8px rgba(15,155,142,.28); }
-.btn-primary:hover { box-shadow: 0 4px 14px rgba(15,155,142,.36); }
-.btn-green { box-shadow: 0 2px 8px rgba(56,176,106,.28); }
-.btn-green:hover { box-shadow: 0 4px 14px rgba(56,176,106,.36); }
+.theme-modern .btn { border-radius: 9px; transition: background .12s, box-shadow .12s, transform .08s, border-color .12s; }
+.theme-modern .btn:active { transform: translateY(1px); }
+.theme-modern .btn-primary { box-shadow: 0 2px 8px rgba(15,155,142,.28); }
+.theme-modern .btn-primary:hover { box-shadow: 0 4px 14px rgba(15,155,142,.36); }
+.theme-modern .btn-green { box-shadow: 0 2px 8px rgba(56,176,106,.28); }
+.theme-modern .btn-green:hover { box-shadow: 0 4px 14px rgba(56,176,106,.36); }
 
-.card { border-radius: var(--r-card); border-color: var(--line); box-shadow: var(--shadow-sm); }
+.theme-modern .card { border-radius: var(--r-card); border-color: var(--line); box-shadow: var(--shadow-sm); }
 
-/* ---- Module rail ---- */
-.module-rail { background: linear-gradient(180deg,#1f2731,#171d25); padding: 10px 0; gap: 9px; }
-.rail-icon { width: 38px; height: 38px; border-radius: 11px; transition: transform .12s, box-shadow .12s, background .12s;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
-.rail-icon:not(.mock):hover { transform: translateY(-1px); }
-.rail-icon.active { box-shadow: 0 6px 16px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.25); }
+/* Module rail */
+.theme-modern .module-rail { background: linear-gradient(180deg,#1f2731,#171d25); padding: 10px 0; gap: 9px; }
+.theme-modern .rail-icon { width: 38px; height: 38px; border-radius: 11px; transition: transform .12s, box-shadow .12s, background .12s; box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+.theme-modern .rail-icon:not(.mock):hover { transform: translateY(-1px); }
+.theme-modern .rail-icon.active { box-shadow: 0 6px 16px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.25); }
 
-/* ---- Cash Receipting sidebar ---- */
-.cr-sidebar { background: linear-gradient(180deg,#2b3440,#252e39); }
-.cr-brand { font-weight: 600; letter-spacing: .08em; }
-.cr-item { transition: background .12s, color .12s; border-radius: 0 8px 8px 0; margin-right: 8px; }
-.cr-item.active { box-shadow: inset 0 0 0 1px rgba(15,155,142,.25); }
+/* Cash Receipting sidebar */
+.theme-modern .cr-sidebar { background: linear-gradient(180deg,#2b3440,#252e39); }
+.theme-modern .cr-brand { font-weight: 600; letter-spacing: .08em; }
+.theme-modern .cr-item { transition: background .12s, color .12s; border-radius: 0 8px 8px 0; margin-right: 8px; }
+.theme-modern .cr-item.active { box-shadow: inset 0 0 0 1px rgba(15,155,142,.25); }
 
-/* ---- TRIO tabs ---- */
-.trio-tabs { background: #eef1f5; padding-top: 2px; }
-.trio-tab { border-radius: 10px 10px 0 0; transition: background .12s, color .12s; box-shadow: none; }
-.trio-tab.active { box-shadow: 0 -1px 0 var(--teal) inset; }
+/* TRIO tabs */
+.theme-modern .trio-tabs { background: #eef1f5; padding-top: 2px; }
+.theme-modern .trio-tab { border-radius: 10px 10px 0 0; transition: background .12s, color .12s; box-shadow: none; }
+.theme-modern .trio-tab.active { box-shadow: 0 -1px 0 var(--teal) inset; }
 
-/* ---- Receipt Input screen ---- */
-.trio-content { padding: 24px 28px; }
-.tr-screen { border-radius: 16px; box-shadow: var(--shadow-md); border-color: var(--line); padding: 24px 26px; }
-.tr-screen-head h2 { font-weight: 700; }
-.tr-select, .tr-paidby input, .tr-amount {
-  border-radius: var(--r-input); transition: border-color .12s, box-shadow .12s;
-}
-.tr-select:focus, .tr-paidby input:focus, .tr-amount:focus {
-  outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,155,142,.12);
-}
-.tr-trans th { background: #f6f8fb; }
-.tr-trans tbody tr:hover { background: #fafbfc; }
-.tr-totals, .tr-payment { background: #fbfcfe; border-radius: 12px; }
-.tr-total.strong { border-color: var(--line); }
-.tr-save .btn { border-radius: 11px; box-shadow: 0 6px 18px rgba(56,176,106,.32); }
-.tr-save .btn:hover { transform: translateY(-1px); }
+/* Receipt Input screen */
+.theme-modern .trio-content { padding: 24px 28px; }
+.theme-modern .tr-screen { border-radius: 16px; box-shadow: var(--shadow-md); border-color: var(--line); padding: 24px 26px; }
+.theme-modern .tr-screen-head h2 { font-weight: 700; }
+.theme-modern .tr-select, .theme-modern .tr-paidby input, .theme-modern .tr-amount { border-radius: var(--r-input); transition: border-color .12s, box-shadow .12s; }
+.theme-modern .tr-select:focus, .theme-modern .tr-paidby input:focus, .theme-modern .tr-amount:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,155,142,.12); }
+.theme-modern .tr-trans th { background: #f6f8fb; }
+.theme-modern .tr-trans tbody tr:hover { background: #fafbfc; }
+.theme-modern .tr-totals, .theme-modern .tr-payment { background: #fbfcfe; border-radius: 12px; }
+.theme-modern .tr-save .btn { border-radius: 11px; box-shadow: 0 6px 18px rgba(56,176,106,.32); }
+.theme-modern .tr-save .btn:hover { transform: translateY(-1px); }
 
-/* ---- Agents module ---- */
-.agents-topbar { box-shadow: var(--shadow-sm); }
-.agents-topbar-icon { background: linear-gradient(135deg,var(--ai-1),var(--ai-2)); box-shadow: 0 6px 16px rgba(108,92,231,.3); }
-
-.agents-roster { padding: 10px; }
-.roster-item { border-radius: 11px; transition: background .12s, box-shadow .12s, transform .08s; border: 1px solid transparent; margin-bottom: 2px; }
-.roster-item:hover { background: #f5f6f9; }
-.roster-item.active { background: #efeaff; border-color: #e0d9fb; box-shadow: 0 2px 8px rgba(108,92,231,.1); }
-.roster-item.active .ri-icon { background: linear-gradient(135deg,var(--ai-1),var(--ai-2)); color: #fff; }
-.ri-icon { transition: background .12s, color .12s; }
-
-.ad-head { background: linear-gradient(180deg,#ffffff,#fbfaff); }
-.ad-icon { background: linear-gradient(135deg,#efeaff,#e3f4f2); box-shadow: inset 0 0 0 1px rgba(108,92,231,.12); }
-.ad-head h2 { font-weight: 700; }
-.ad-systems span { background: #f1f3f8; border: 1px solid var(--line); }
-
-.task-card { border-radius: 14px; transition: border-color .12s, box-shadow .12s, transform .08s; }
-.task-card:hover { border-color: #cfd5e0; box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.cadence { background: #efeaff; color: #5a4bd0; }
+/* Agents module */
+.theme-modern .agents-topbar { box-shadow: var(--shadow-sm); }
+.theme-modern .agents-topbar-icon { background: linear-gradient(135deg,var(--ai-1),var(--ai-2)); box-shadow: 0 6px 16px rgba(108,92,231,.3); }
+.theme-modern .agents-roster { padding: 10px; }
+.theme-modern .roster-item { border-radius: 11px; transition: background .12s, box-shadow .12s, transform .08s; border: 1px solid transparent; margin-bottom: 2px; }
+.theme-modern .roster-item:hover { background: #f5f6f9; }
+.theme-modern .roster-item.active { background: #efeaff; border-color: #e0d9fb; box-shadow: 0 2px 8px rgba(108,92,231,.1); }
+.theme-modern .roster-item.active .ri-icon { background: linear-gradient(135deg,var(--ai-1),var(--ai-2)); color: #fff; }
+.theme-modern .ri-icon { transition: background .12s, color .12s; }
+.theme-modern .ad-head { background: linear-gradient(180deg,#ffffff,#fbfaff); }
+.theme-modern .ad-icon { background: linear-gradient(135deg,#efeaff,#e3f4f2); box-shadow: inset 0 0 0 1px rgba(108,92,231,.12); }
+.theme-modern .ad-head h2 { font-weight: 700; }
+.theme-modern .ad-systems span { background: #f1f3f8; border: 1px solid var(--line); }
+.theme-modern .task-card { border-radius: 14px; transition: border-color .12s, box-shadow .12s, transform .08s; }
+.theme-modern .task-card:hover { border-color: #cfd5e0; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.theme-modern .cadence { background: #efeaff; color: #5a4bd0; }
 
 /* Card / proposal refinements */
-.proposal { border-radius: var(--r-card); }
-.draft-box { border-radius: 10px; background: #fafbfd; }
-.kind-tag { background: #efeaff; color: #5a4bd0; }
-
-/* Governance banner refresh */
-.governance-banner { border-radius: 12px; background: linear-gradient(90deg,#eef9f2,#eef1fe); border-color: #cfe9d8; }
+.theme-modern .proposal { border-radius: var(--r-card); }
+.theme-modern .draft-box { border-radius: 10px; background: #fafbfd; }
+.theme-modern .kind-tag { background: #efeaff; color: #5a4bd0; }
+.theme-modern .governance-banner { border-radius: 12px; background: linear-gradient(90deg,#eef9f2,#eef1fe); border-color: #cfe9d8; }
 
 /* Subtle fade-in for content panes */
-.trio-content > .tr-screen, .agents-console { animation: rise .22s ease; }
+.theme-modern .trio-content > .tr-screen, .theme-modern .agents-console { animation: rise .22s ease; }

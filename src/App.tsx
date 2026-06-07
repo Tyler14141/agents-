@@ -37,13 +37,26 @@ const CR_MENU = [
   { label: 'File Maintenance' },
 ];
 
+type Theme = 'modern' | 'classic';
+
+function ThemeToggle({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) => void }) {
+  return (
+    <div className="theme-toggle" title="Switch interface style">
+      <span className="theme-toggle-label">Interface</span>
+      <button className={theme === 'classic' ? 'active' : ''} onClick={() => setTheme('classic')}>Classic</button>
+      <button className={theme === 'modern' ? 'active' : ''} onClick={() => setTheme('modern')}>Modern</button>
+    </div>
+  );
+}
+
 export default function App() {
   const [activeModule, setActiveModule] = useState<ModuleId>('cr');
   const [tab, setTab] = useState<'input' | 'search'>('input');
+  const [theme, setTheme] = useState<Theme>('modern');
   const pending = useStore((s) => s.proposals.filter((p) => p.status === 'pending').length);
 
   return (
-    <div className="trio">
+    <div className={`trio theme-${theme}`}>
       {/* Module rail */}
       <div className="module-rail">
         {MODULES.map((m) => {
@@ -94,6 +107,7 @@ export default function App() {
                 <span className="ti red">▦</span> Receipt Search <span className="tx">✕</span>
               </div>
               <div className="trio-tabs-spacer" />
+              <ThemeToggle theme={theme} setTheme={setTheme} />
               <div className="trio-grid-btn">▦</div>
             </div>
             <div className="trio-content">
@@ -119,6 +133,8 @@ export default function App() {
               <div className="agents-topbar-title">TRIO Agents</div>
               <div className="agents-topbar-sub">Governed operating layer over TRIO + CAMA · {MUNICIPALITY.name}</div>
             </div>
+            <div style={{ flex: 1 }} />
+            <ThemeToggle theme={theme} setTheme={setTheme} />
           </div>
           <div className="agents-wrap">
             <AgentsConsole />
