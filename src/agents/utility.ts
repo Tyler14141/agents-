@@ -1,5 +1,5 @@
 import type { AgentProposal, SourceRef, UtilityAccount } from '../types';
-import { UTILITY_ACCOUNTS, RESIDENTS } from '../data/municipal';
+import { UTILITY_ACCOUNTS, RESIDENTS, estimateBill, utilityBaseline, utilityFlag } from '../data/municipal';
 import { makeProposal, usd } from './util';
 
 // ---------------------------------------------------------------------------
@@ -17,35 +17,32 @@ function residentName(id: string): string {
   return RESIDENTS.find((r) => r.id === id)?.name ?? 'resident';
 }
 
-function baseline(u: UtilityAccount): number {
-  const prior = u.usage.slice(0, -1);
-  if (prior.length === 0) return u.usage[0]?.ccf ?? 0;
-  return Math.round(prior.reduce((s, r) => s + r.ccf, 0) / prior.length);
-}
-
 function src(u: UtilityAccount): SourceRef {
   return { system: 'TRIO', module: 'Utility Billing', recordId: u.id, label: `Utility ${u.id} (${u.serviceAddress})` };
 }
 
-/** Daily: detect usage spikes vs. the account's own baseline. */
-export function utilityHighUsage(): AgentProposal[] {
+/** Daily: flag accounts with extremely HIGH or LOW consumption vs. their own baseline. */
+export function utilityUsageScan(): AgentProposal[] {
   const out: AgentProposal[] = [];
   for (const u of UTILITY_ACCOUNTS) {
+    const flag = utilityFlag(u);
+    if (!flag) continue;
     const last = u.usage[u.usage.length - 1];
-    const base = baseline(u);
-    if (last && base > 0 && last.ccf >= base * 3 && u.status !== 'final') {
+    const base = Math.round(utilityBaseline(u));
+
+    if (flag === 'high') {
       out.push(
         makeProposal({
           role: 'utility',
           kind: 'utility-exception',
           title: `High-usage exception: ${u.id} (${u.serviceAddress})`,
-          rationale: `${last.period} read of ${last.ccf} CCF is ${Math.round(last.ccf / base)}× the ~${base} CCF baseline.`,
+          rationale: `${last.period} read of ${last.ccf} CCF is ${(last.ccf / Math.max(1, base)).toFixed(1)}× the ~${base} CCF baseline.`,
           confidence: 0.83,
           sources: [src(u)],
           suggestedAction: `Hold the bill for ${u.id}, schedule a re-read, and send the resident the high-usage notice + leak-adjustment form.`,
           draft: [
             `${residentName(u.residentId)} — ${u.serviceAddress} (account ${u.id})`,
-            `Latest read (${last.period}): ${last.ccf} CCF vs. baseline ~${base} CCF. Current balance ${usd(u.balance)}.`,
+            `Latest read (${last.period}): ${last.ccf} CCF vs. baseline ~${base} CCF. Estimated bill ${usd(estimateBill(last.ccf))} (typical ${usd(estimateBill(base))}).`,
             '',
             `Recommended steps for review:`,
             `1. Place a billing hold on ${u.id} pending verification.`,
@@ -54,9 +51,68 @@ export function utilityHighUsage(): AgentProposal[] {
           ].join('\n'),
         }),
       );
+    } else {
+      out.push(
+        makeProposal({
+          role: 'utility',
+          kind: 'utility-exception',
+          title: `Low/zero-usage exception: ${u.id} (${u.serviceAddress})`,
+          rationale: `${last.period} read of ${last.ccf} CCF is far below the ~${base} CCF baseline — possible stopped meter, vacancy, or misread.`,
+          confidence: 0.78,
+          sources: [src(u)],
+          suggestedAction: `Hold the bill for ${u.id} and dispatch a re-read / meter check before billing.`,
+          draft: [
+            `${residentName(u.residentId)} — ${u.serviceAddress} (account ${u.id})`,
+            `Latest read (${last.period}): ${last.ccf} CCF vs. baseline ~${base} CCF. An abnormally low or zero read often means a stuck/stopped meter, a vacated property, or a transposed read.`,
+            '',
+            `Recommended steps for review:`,
+            `1. Place a billing hold on ${u.id} so an estimated/zero bill is not sent in error.`,
+            `2. Dispatch a meter check / re-read; confirm occupancy status.`,
+            `3. If the meter is failed, schedule replacement and bill on estimated consumption per policy.`,
+          ].join('\n'),
+        }),
+      );
     }
   }
   return out;
+}
+
+/** Bill-run summary: counts, estimated billed total, flagged accounts, amount overdue. */
+export function utilityBillRunSummary(): AgentProposal[] {
+  const inRun = UTILITY_ACCOUNTS.filter((u) => u.status === 'active' || u.status === 'delinquent');
+  const finals = UTILITY_ACCOUNTS.filter((u) => u.status === 'final');
+  const billed = inRun.reduce((s, u) => s + estimateBill(u.usage[u.usage.length - 1]?.ccf ?? 0), 0);
+  const high = UTILITY_ACCOUNTS.filter((u) => utilityFlag(u) === 'high');
+  const low = UTILITY_ACCOUNTS.filter((u) => utilityFlag(u) === 'low');
+  const pastDue = UTILITY_ACCOUNTS.filter((u) => u.pastDueDays > 0 || u.balance > 0);
+  const overdue = pastDue.reduce((s, u) => s + u.balance, 0);
+  const delinquent = UTILITY_ACCOUNTS.filter((u) => u.status === 'delinquent');
+
+  const flaggedSources: SourceRef[] = [...high, ...low].map(src);
+
+  return [
+    makeProposal({
+      role: 'utility',
+      kind: 'utility-billrun',
+      title: `Bill-run summary — cycle ending ${UTILITY_ACCOUNTS[0]?.lastReadDate ?? ''}`,
+      rationale: `${inRun.length} accounts in the run; ${high.length + low.length} usage exception(s); ${usd(overdue)} overdue.`,
+      confidence: 0.9,
+      sources: flaggedSources,
+      suggestedAction: `Resolve the ${high.length + low.length} flagged read(s), then release the bill run for ${inRun.length} accounts.`,
+      draft: [
+        `UTILITY BILL-RUN SUMMARY`,
+        `Accounts in this cycle: ${inRun.length} (active + delinquent)${finals.length ? ` · ${finals.length} final bill(s) pending` : ''}.`,
+        `Estimated billed this cycle: ${usd(billed)}.`,
+        '',
+        `Usage exceptions to clear before release: ${high.length + low.length}`,
+        `  • High usage (${high.length}): ${high.map((u) => `${u.id} ${u.serviceAddress}`).join('; ') || 'none'}`,
+        `  • Low / zero usage (${low.length}): ${low.map((u) => `${u.id} ${u.serviceAddress}`).join('; ') || 'none'}`,
+        '',
+        `Receivables: ${pastDue.length} account(s) past due totaling ${usd(overdue)}; ${delinquent.length} in delinquent status.`,
+        `  ${pastDue.map((u) => `${u.id} ${usd(u.balance)} (${u.pastDueDays}d)`).join(' · ')}`,
+      ].join('\n'),
+    }),
+  ];
 }
 
 /** Weekly: delinquency / shutoff candidates needing outreach. */

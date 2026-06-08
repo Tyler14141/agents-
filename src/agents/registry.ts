@@ -1,7 +1,7 @@
 import type { AgentProposal, AgentRole } from '../types';
 import { financeVariance, financeExceptions, financeClose, financeCouncil } from './finance';
 import { csTriage, csReplies, csContext } from './customerService';
-import { utilityHighUsage, utilityDelinquency, utilityFinalBills } from './utility';
+import { utilityUsageScan, utilityDelinquency, utilityFinalBills, utilityBillRunSummary } from './utility';
 import { payrollPreRun, payrollExceptionScan, payrollYearEnd } from './payroll';
 import { managerDailyReport } from './manager';
 import { taxDelinquency, taxCertificates, taxOwnership } from './tax';
@@ -69,7 +69,8 @@ export const AGENTS: AgentDef[] = [
     systems: ['TRIO Utility Billing', 'Cash Receipts'],
     status: 'active',
     tasks: [
-      { id: 'high-usage', label: 'High-usage exception scan', description: 'Detect usage spikes vs. each account baseline.', cadence: 'Daily', run: utilityHighUsage },
+      { id: 'bill-run', label: 'Bill-run summary', description: 'Accounts in the cycle, estimated billed, flagged reads, and amount overdue.', cadence: 'Monthly', run: utilityBillRunSummary },
+      { id: 'usage-scan', label: 'Usage exception scan (high & low)', description: 'Flag extremely high or low/zero consumption vs. each account baseline.', cadence: 'Daily', run: utilityUsageScan },
       { id: 'delinquency', label: 'Delinquency / shutoff candidates', description: 'Identify past-due accounts and draft arrangement outreach.', cadence: 'Weekly', run: utilityDelinquency },
       { id: 'final-bills', label: 'Final-bill prep', description: 'Prepare final bills for move-out accounts.', cadence: 'On demand', run: utilityFinalBills },
     ],

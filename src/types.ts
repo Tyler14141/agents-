@@ -249,6 +249,7 @@ export type ProposalKind =
   | 'utility-exception'
   | 'utility-collections'
   | 'utility-final-bill'
+  | 'utility-billrun'
   // Payroll
   | 'payroll-exception'
   | 'payroll-checklist'

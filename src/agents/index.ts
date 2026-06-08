@@ -10,6 +10,7 @@ export const PROPOSAL_KIND_LABEL: Record<string, string> = {
   'utility-exception': 'Usage exception',
   'utility-collections': 'Collections / shutoff',
   'utility-final-bill': 'Final bill',
+  'utility-billrun': 'Bill run summary',
   'payroll-exception': 'Payroll exception',
   'payroll-checklist': 'Payroll checklist',
   report: 'Report',

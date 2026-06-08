@@ -649,3 +649,8 @@ table.data tr:last-child td { border-bottom: none; }
 .pr-stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .pr-stat .v { font-size: 19px; font-weight: 700; margin-top: 3px; }
 table.data tfoot td { padding: 9px 12px; border-top: 2px solid var(--line); }
+
+/* ---- Utility usage alert ---- */
+.usage-alert { margin: 12px 0 6px; padding: 9px 12px; border-radius: 8px; font-size: 12.5px; line-height: 1.45; }
+.usage-alert.high { background: var(--red-bg); color: var(--red); border: 1px solid #e7c3bd; }
+.usage-alert.low { background: var(--amber-bg); color: var(--amber); border: 1px solid #f0dca8; }

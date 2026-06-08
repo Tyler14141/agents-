@@ -96,6 +96,7 @@ export const RESIDENTS: Resident[] = [
   { id: 'R-1008', name: 'Aroostook Diner Inc', mailingAddress: '140 Main Street, Presque Isle, ME 04769', phone: '(207) 555-0244', language: 'en', utilityAccountId: 'U-5018' },
   { id: 'R-1009', name: 'Patricia Gagnon', mailingAddress: '9 Birch Street, Presque Isle, ME 04769', phone: '(207) 555-0259', language: 'en', utilityAccountId: 'U-5019' },
   { id: 'R-1010', name: 'Daniel Bouchard', mailingAddress: '33 Third Street, Presque Isle, ME 04769', phone: '(207) 555-0262', language: 'en', utilityAccountId: 'U-5020' },
+  { id: 'R-1011', name: 'Kevin & Holly Michaud', mailingAddress: '5 Highland Avenue, Presque Isle, ME 04769', phone: '(207) 555-0274', language: 'en', utilityAccountId: 'U-5021' },
 ];
 
 export const UTILITY_ACCOUNTS: UtilityAccount[] = [
@@ -181,6 +182,10 @@ export const UTILITY_ACCOUNTS: UtilityAccount[] = [
   {
     id: 'U-5020', residentId: 'R-1010', serviceAddress: '33 Third Street', status: 'active', balance: 0, pastDueDays: 0, lastReadDate: '2026-05-28',
     usage: [{ period: '2026-01', ccf: 10 }, { period: '2026-02', ccf: 11 }, { period: '2026-03', ccf: 9 }, { period: '2026-04', ccf: 10 }, { period: '2026-05', ccf: 10 }],
+  },
+  {
+    id: 'U-5021', residentId: 'R-1011', serviceAddress: '5 Highland Avenue', status: 'active', balance: 0, pastDueDays: 0, lastReadDate: '2026-05-28',
+    usage: [{ period: '2026-01', ccf: 10 }, { period: '2026-02', ccf: 11 }, { period: '2026-03', ccf: 9 }, { period: '2026-04', ccf: 10 }, { period: '2026-05', ccf: 0 }], // near-zero -> possible stopped meter / vacancy
   },
 ];
 
@@ -560,4 +565,42 @@ export function payFor(emp: Employee, line: PayRunLine): { gross: number; deduct
   const gross = grossFor(emp, line);
   const deductions = gross * DEDUCTION_RATE;
   return { gross, deductions, net: gross - deductions };
+}
+
+// ---- Utility billing helpers ---------------------------------------------
+
+/** Estimated water+sewer bill for a given period consumption (CCF). */
+export function estimateBill(ccf: number): number {
+  const r = RATE_SCHEDULE;
+  let water = r.waterBase;
+  let remaining = ccf;
+  let prevCap = 0;
+  for (const tier of r.waterTiers) {
+    const cap = tier.upToCcf ?? Infinity;
+    const inTier = Math.max(0, Math.min(remaining, cap - prevCap));
+    water += inTier * tier.perCcf;
+    remaining -= inTier;
+    prevCap = cap;
+    if (remaining <= 0) break;
+  }
+  const sewer = r.sewerBase + ccf * r.sewerPerCcf;
+  return Math.round((water + sewer) * 100) / 100;
+}
+
+/** Average prior-period consumption (excludes the latest read). */
+export function utilityBaseline(acct: UtilityAccount): number {
+  const prior = acct.usage.slice(0, -1);
+  if (prior.length === 0) return acct.usage[0]?.ccf ?? 0;
+  return prior.reduce((s, u) => s + u.ccf, 0) / prior.length;
+}
+
+/** Flag a usage anomaly vs the account's own baseline (skips move-out/final). */
+export function utilityFlag(acct: UtilityAccount): 'high' | 'low' | null {
+  if (acct.status === 'final') return null;
+  const last = acct.usage[acct.usage.length - 1]?.ccf ?? 0;
+  const base = utilityBaseline(acct);
+  if (base <= 0) return null;
+  if (last >= base * 3) return 'high';
+  if (base >= 4 && last <= base * 0.25) return 'low';
+  return null;
 }
