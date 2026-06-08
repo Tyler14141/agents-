@@ -17,12 +17,41 @@ function audit(p: AgentProposal, action: AuditEntry['action'], detail: string): 
 }
 
 const rid = () => `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+const usd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+/** A counter payment posted directly by a human operator (not an agent draft). */
+export interface PostedPayment {
+  id: string;
+  receiptId: string;
+  at: string;
+  by: string;
+  accountType: 'utility' | 'tax';
+  accountId: string;
+  residentId?: string;
+  residentName: string;
+  amount: number;
+  tender: 'Cash' | 'Check' | 'Credit';
+}
+
+export interface NavTarget {
+  module: string;
+  customerId?: string;
+}
+
+/** Total posted against an account (used to show live balances). */
+export function paidFor(posts: PostedPayment[], accountType: 'utility' | 'tax', accountId?: string): number {
+  return posts
+    .filter((p) => p.accountType === accountType && (!accountId || p.accountId === accountId))
+    .reduce((s, p) => s + p.amount, 0);
+}
 
 interface AppState {
   currentRole: AgentRole;
   proposals: AgentProposal[];
   auditLog: AuditEntry[];
   runs: AgentRun[];
+  posts: PostedPayment[];
+  nav: NavTarget | null;
   /** Key of the task currently executing, e.g. "finance:variance" or "finance:all". */
   runningKey: string | null;
 
@@ -33,6 +62,10 @@ interface AppState {
   addProposals: (fresh: AgentProposal[]) => void;
   approve: (id: string, editedDraft?: string) => void;
   reject: (id: string, note?: string) => void;
+  /** Post a counter payment: creates a receipt + audit entry and reduces the balance. */
+  postPayment: (input: { accountType: 'utility' | 'tax'; accountId: string; residentId?: string; residentName: string; amount: number; tender: 'Cash' | 'Check' | 'Credit' }) => PostedPayment;
+  goTo: (module: string, customerId?: string) => void;
+  clearNav: () => void;
   reset: () => void;
 }
 
@@ -41,6 +74,8 @@ export const useStore = create<AppState>((set, get) => ({
   proposals: [],
   auditLog: [],
   runs: [],
+  posts: [],
+  nav: null,
   runningKey: null,
 
   setRole: (role) => set({ currentRole: role }),
@@ -154,5 +189,32 @@ export const useStore = create<AppState>((set, get) => ({
     }));
   },
 
-  reset: () => set({ proposals: [], auditLog: [], runs: [] }),
+  postPayment: (input) => {
+    const at = new Date().toISOString();
+    const receiptId = `RC-P${Date.now().toString(36).slice(-5).toUpperCase()}`;
+    const payment: PostedPayment = {
+      id: `PMT-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+      receiptId,
+      at,
+      by: MUNICIPALITY.user.name,
+      ...input,
+    };
+    const entry: AuditEntry = {
+      id: `A-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      at,
+      actor: MUNICIPALITY.user.name,
+      action: 'written-back',
+      role: 'customer-service',
+      proposalId: receiptId,
+      proposalTitle: `Payment ${receiptId}`,
+      detail: `Posted ${usd(input.amount)} ${input.tender} to ${input.accountType} account ${input.accountId} (${input.residentName}); receipt ${receiptId} created.`,
+    };
+    set((s) => ({ posts: [payment, ...s.posts], auditLog: [entry, ...s.auditLog] }));
+    return payment;
+  },
+
+  goTo: (module, customerId) => set({ nav: { module, customerId } }),
+  clearNav: () => set({ nav: null }),
+
+  reset: () => set({ proposals: [], auditLog: [], runs: [], posts: [] }),
 }));

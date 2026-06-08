@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TrioAssistant } from './components/TrioAssistant';
 import { AgentsConsole } from './components/AgentsConsole';
 import { TrioModuleView, type TrioModuleDef } from './components/TrioModuleView';
@@ -142,6 +142,12 @@ export default function App() {
   const [activeModule, setActiveModule] = useState<ModuleId>('cr');
   const [theme, setTheme] = useState<Theme>('modern');
   const pending = useStore((s) => s.proposals.filter((p) => p.status === 'pending').length);
+  const nav = useStore((s) => s.nav);
+
+  // Deep-link navigation (e.g. the assistant routing to Customer Search).
+  useEffect(() => {
+    if (nav && nav.module !== activeModule) setActiveModule(nav.module);
+  }, [nav, activeModule]);
   const toggle = <ThemeToggle theme={theme} setTheme={setTheme} />;
   const moduleDef = MODULE_DEFS[activeModule];
 

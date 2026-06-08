@@ -236,7 +236,7 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
       return reply(
         ['Searching residents & accounts', 'Joining Utility + Tax + Cash Receipts', 'Assembling snapshot'],
         [t(residentSnapshot(r.id))],
-        ['Draft a reply to this resident', 'What needs attention today?'],
+        [`Open ${r.name} in Customer Search`, 'Draft a reply to this resident'],
       );
     }
     return reply([], [t(`I couldn't find an account matching “${query}”. Try a name (e.g. “Maria Delgado”) or an account # (U-5013, T-3090, R-1002).`)], [], false);
@@ -356,6 +356,14 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
     ['How much is owed in total?', 'Look up Maria Delgado'],
     false,
   );
+}
+
+/** Detects "open <customer> in Customer Search" and resolves the resident. */
+export function customerNavTarget(input: string): { id: string; name: string } | null {
+  const m = /open (.+?) in customer search/i.exec(input.trim());
+  if (!m) return null;
+  const r = findResident(m[1].trim());
+  return r ? { id: r.id, name: r.name } : null;
 }
 
 export function greetingStats(): { exceptions: number; high: number; inquiries: number } {

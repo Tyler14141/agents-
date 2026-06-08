@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { RECEIPTS, RESIDENTS } from '../../data/municipal';
+import { useStore } from '../../store';
 import type { Receipt } from '../../types';
 
 function usd(n: number) {
@@ -18,10 +19,22 @@ export function ReceiptSearchScreen() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [sel, setSel] = useState<string | null>(null);
+  const posts = useStore((s) => s.posts);
+
+  // Counter payments posted at the front desk appear here as receipts.
+  const postedReceipts: Receipt[] = posts.map((p) => ({
+    id: p.receiptId,
+    residentId: p.residentId,
+    date: p.at.slice(0, 10),
+    module: p.accountType === 'utility' ? 'Utility' : 'Tax',
+    description: `${p.accountType === 'utility' ? 'Water' : 'Tax'} payment on ${p.accountId}`,
+    amount: p.amount,
+    tender: p.tender,
+  }));
 
   const results = useMemo(() => {
     const q = text.trim().toLowerCase();
-    return RECEIPTS.filter((rc) => {
+    return [...postedReceipts, ...RECEIPTS].filter((rc) => {
       if (module !== 'All' && rc.module !== module) return false;
       if (tender !== 'All' && rc.tender !== tender) return false;
       if (from && rc.date < from) return false;
@@ -32,7 +45,8 @@ export function ReceiptSearchScreen() {
       }
       return true;
     }).sort((a, b) => b.date.localeCompare(a.date));
-  }, [text, module, tender, from, to]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, module, tender, from, to, posts]);
 
   const total = results.reduce((s, r) => s + r.amount, 0);
   const selected = results.find((r) => r.id === sel) ?? null;

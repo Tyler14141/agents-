@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UTILITY_ACCOUNTS, RESIDENTS, estimateBill, utilityBaseline, utilityFlag } from '../../data/municipal';
+import { useStore, paidFor } from '../../store';
 
 function usd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -9,6 +10,8 @@ const cust = (id: string) => RESIDENTS.find((r) => r.id === id)?.name ?? '—';
 export function UtilityScreen() {
   const [sel, setSel] = useState(UTILITY_ACCOUNTS[0].id);
   const acct = UTILITY_ACCOUNTS.find((u) => u.id === sel)!;
+  const posts = useStore((s) => s.posts);
+  const bal = (id: string, base: number) => Math.max(0, base - paidFor(posts, 'utility', id));
   const maxCcf = Math.max(...acct.usage.map((u) => u.ccf), 1);
   const acctFlag = utilityFlag(acct);
   const acctLast = acct.usage[acct.usage.length - 1]?.ccf ?? 0;
@@ -19,8 +22,8 @@ export function UtilityScreen() {
   const flagged = UTILITY_ACCOUNTS.filter((u) => utilityFlag(u));
   const highCount = UTILITY_ACCOUNTS.filter((u) => utilityFlag(u) === 'high').length;
   const lowCount = UTILITY_ACCOUNTS.filter((u) => utilityFlag(u) === 'low').length;
-  const pastDue = UTILITY_ACCOUNTS.filter((u) => u.pastDueDays > 0 || u.balance > 0);
-  const overdue = pastDue.reduce((s, u) => s + u.balance, 0);
+  const pastDue = UTILITY_ACCOUNTS.filter((u) => (u.pastDueDays > 0 || u.balance > 0) && bal(u.id, u.balance) > 0);
+  const overdue = pastDue.reduce((s, u) => s + bal(u.id, u.balance), 0);
 
   return (
     <div className="tr-screen mod-screen">
@@ -43,7 +46,7 @@ export function UtilityScreen() {
                 <tr key={u.id} className={u.id === sel ? 'row-sel' : ''} onClick={() => setSel(u.id)}>
                   <td>{u.id}</td>
                   <td>{u.serviceAddress}</td>
-                  <td className="num">{usd(u.balance)}</td>
+                  <td className="num">{usd(bal(u.id, u.balance))}</td>
                   <td>{f === 'high' ? <span className="tag high">⚠ High</span> : f === 'low' ? <span className="tag medium">⚠ Low</span> : <span className="muted">ok</span>}</td>
                   <td><span className={`tag ${u.status}`}>{u.status}</span></td>
                 </tr>
@@ -55,7 +58,7 @@ export function UtilityScreen() {
         <div className="mod-detail card card-pad">
           <h3>{acct.id} · {acct.serviceAddress}</h3>
           <div className="kv"><span>Customer</span><b>{cust(acct.residentId)}</b></div>
-          <div className="kv"><span>Balance</span><b className={acct.balance > 0 ? 'neg' : ''}>{usd(acct.balance)}</b></div>
+          <div className="kv"><span>Balance</span><b className={bal(acct.id, acct.balance) > 0 ? 'neg' : ''}>{usd(bal(acct.id, acct.balance))}</b></div>
           <div className="kv"><span>Status</span><b><span className={`tag ${acct.status}`}>{acct.status}</span></b></div>
           <div className="kv"><span>Past due</span><b>{acct.pastDueDays} days</b></div>
           <div className="kv"><span>Last read</span><b>{acct.lastReadDate}</b></div>

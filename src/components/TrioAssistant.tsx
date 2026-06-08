@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { respond, STARTERS, WELCOME, greetingStats, type Turn } from '../assistant/respond';
+import { respond, STARTERS, WELCOME, greetingStats, customerNavTarget, type Turn } from '../assistant/respond';
 import { askLLM, checkHealth, type ChatMessage } from '../assistant/llm';
 import { useStore } from '../store';
 import { ProposalCard } from './ProposalCard';
@@ -93,6 +93,7 @@ export function TrioAssistant({ screen }: { screen: string }) {
   const [followups, setFollowups] = useState<string[]>([]);
   const [live, setLive] = useState(false);
   const addProposals = useStore((s) => s.addProposals);
+  const goTo = useStore((s) => s.goTo);
   const pendingCount = useStore((s) => s.proposals.filter((p) => p.status === 'pending').length);
   const bodyRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -112,8 +113,16 @@ export function TrioAssistant({ screen }: { screen: string }) {
     setItems((prev) => [...prev, { id: nid(), role: 'user', text }]);
     setInput('');
     setFollowups([]);
-    setThinking(true);
 
+    // Deep-link: "Open <customer> in Customer Search" navigates and preselects.
+    const navT = customerNavTarget(text);
+    if (navT) {
+      goTo('cs', navT.id);
+      setItems((prev) => [...prev, { id: nid(), role: 'text', text: `Opening ${navT.name} in Customer Search — you can review balances and take a payment there.` }]);
+      return;
+    }
+
+    setThinking(true);
     const r = respond(text, { screen });
 
     // Free-form question + live Claude API configured -> real model answer.
