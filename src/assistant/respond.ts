@@ -21,6 +21,7 @@ import {
 } from '../data/municipal';
 import { runCustomerServiceAgent } from '../agents/customerService';
 import { runFinanceAgent } from '../agents/finance';
+import { managerDailyReport } from '../agents/manager';
 
 // ---------------------------------------------------------------------------
 // TRIO Assistant — the governed agent that works "over top" of the TRIO UI as
@@ -61,7 +62,7 @@ export const STARTERS: StarterPrompt[] = [
   { icon: '⚠️', title: 'What needs attention?', subtitle: 'Cross-module exception summary', prompt: 'What needs attention today?' },
   { icon: '🔎', title: 'Look up a resident', subtitle: 'Balances across TRIO modules', prompt: 'Look up Maria Delgado' },
   { icon: '✍️', title: 'Draft a reply', subtitle: 'Knowledge-grounded response', prompt: 'Draft a reply about the high water bill' },
-  { icon: '📊', title: 'Run a report', subtitle: 'Council-ready briefing', prompt: 'Draft a council briefing' },
+  { icon: '📊', title: 'Run a report', subtitle: 'Choose which report', prompt: 'run a report' },
 ];
 
 export const WELCOME =
@@ -236,7 +237,7 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
       return reply(
         ['Searching residents & accounts', 'Joining Utility + Tax + Cash Receipts', 'Assembling snapshot'],
         [t(residentSnapshot(r.id))],
-        [`Open ${r.name} in Customer Search`, 'Draft a reply to this resident'],
+        [`Take me to ${r.name} in Customer Search`, `Change ${r.name}'s information`, 'Draft a reply to this resident'],
       );
     }
     return reply([], [t(`I couldn't find an account matching “${query}”. Try a name (e.g. “Maria Delgado”) or an account # (U-5013, T-3090, R-1002).`)], [], false);
@@ -285,6 +286,32 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
       ['Reading budget, tax & utility receivables', 'Synthesizing financial position', 'Drafting briefing'],
       [t('I drafted a council briefing on the FY2026 financial position. Finance Director to finalize before distribution:'), ...financeProposals(['council-memo']).map(p)],
       ['Any budget lines over?', 'What needs attention today?'],
+    );
+  }
+
+  // manager cross-office daily report
+  if (q.includes('cross-office') || q.includes('daily report') || q.includes('briefing book') || (q.includes('manager') && q.includes('report'))) {
+    return reply(
+      ['Consolidating exceptions, inquiries, receivables & budget', 'Drafting briefing'],
+      [t('Here is the cross-office daily report for the manager:'), ...managerDailyReport().map(p)],
+      ['Council briefing', 'What needs attention today?'],
+    );
+  }
+
+  // "run a report" -> ask which report
+  if (q === 'report' || q === 'reports' || q.includes('run a report') || q.includes('run report') || q.includes('generate a report') || q.includes('which report') || q.includes('what reports')) {
+    return reply(
+      ['Listing available reports'],
+      [t([
+        'Which report would you like? I can draft any of these for your review:',
+        '• Cross-office daily report — consolidated briefing for the manager',
+        '• Council briefing — FY2026 financial position',
+        '• Exception summary — open items across modules',
+        '• Budget variance — over/under appropriation lines',
+        '• Balances owed — water + tax receivables',
+        '• Month-end close checklist',
+      ].join('\n'))],
+      ['Cross-office daily report', 'Council briefing', 'Exception summary', 'Budget variance', 'Balances owed', 'Month-end close checklist'],
     );
   }
 
@@ -358,12 +385,17 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
   );
 }
 
-/** Detects "open <customer> in Customer Search" and resolves the resident. */
-export function customerNavTarget(input: string): { id: string; name: string } | null {
-  const m = /open (.+?) in customer search/i.exec(input.trim());
-  if (!m) return null;
-  const r = findResident(m[1].trim());
-  return r ? { id: r.id, name: r.name } : null;
+/** Detects navigation phrases for a customer and resolves the resident + intent. */
+export function customerNavTarget(input: string): { id: string; name: string; intent: 'view' | 'edit' } | null {
+  const s = input.trim();
+  let intent: 'view' | 'edit' | null = null;
+  let name = '';
+  let m = /(?:open|take me to|go to|show)\s+(.+?)\s+in customer search/i.exec(s);
+  if (m) { intent = 'view'; name = m[1]; }
+  if (!m) { m = /(?:change|edit|update)\s+(.+?)(?:'s)?\s+(?:information|info|details|contact|address|phone)/i.exec(s); if (m) { intent = 'edit'; name = m[1]; } }
+  if (!intent) return null;
+  const r = findResident(name.trim());
+  return r ? { id: r.id, name: r.name, intent } : null;
 }
 
 export function greetingStats(): { exceptions: number; high: number; inquiries: number } {

@@ -117,8 +117,11 @@ export function TrioAssistant({ screen }: { screen: string }) {
     // Deep-link: "Open <customer> in Customer Search" navigates and preselects.
     const navT = customerNavTarget(text);
     if (navT) {
-      goTo('cs', navT.id);
-      setItems((prev) => [...prev, { id: nid(), role: 'text', text: `Opening ${navT.name} in Customer Search — you can review balances and take a payment there.` }]);
+      goTo('cs', navT.id, navT.intent);
+      const msg = navT.intent === 'edit'
+        ? `Opening ${navT.name} in Customer Search — the edit form is ready to update their contact information.`
+        : `Opening ${navT.name} in Customer Search — you can review balances and take a payment there.`;
+      setItems((prev) => [...prev, { id: nid(), role: 'text', text: msg }]);
       return;
     }
 

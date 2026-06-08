@@ -64,6 +64,13 @@ export interface PostedPayment {
 export interface NavTarget {
   module: string;
   customerId?: string;
+  intent?: 'view' | 'edit' | 'pay';
+}
+
+export interface CustomerEdit {
+  mailingAddress?: string;
+  phone?: string;
+  email?: string;
 }
 
 /** Total posted against an account (used to show live balances). */
@@ -80,6 +87,7 @@ interface AppState {
   runs: AgentRun[];
   posts: PostedPayment[];
   effects: AppliedEffect[];
+  customerEdits: Record<string, CustomerEdit>;
   nav: NavTarget | null;
   /** Key of the task currently executing, e.g. "finance:variance" or "finance:all". */
   runningKey: string | null;
@@ -93,7 +101,9 @@ interface AppState {
   reject: (id: string, note?: string) => void;
   /** Post a counter payment: creates a receipt + audit entry and reduces the balance. */
   postPayment: (input: { accountType: 'utility' | 'tax'; accountId: string; residentId?: string; residentName: string; amount: number; tender: 'Cash' | 'Check' | 'Credit' }) => PostedPayment;
-  goTo: (module: string, customerId?: string) => void;
+  /** Update a resident's contact info (logged); overrides the static record. */
+  updateCustomer: (id: string, name: string, patch: CustomerEdit) => void;
+  goTo: (module: string, customerId?: string, intent?: NavTarget['intent']) => void;
   clearNav: () => void;
   reset: () => void;
 }
@@ -105,6 +115,7 @@ export const useStore = create<AppState>((set, get) => ({
   runs: [],
   posts: [],
   effects: [],
+  customerEdits: {},
   nav: null,
   runningKey: null,
 
@@ -259,8 +270,28 @@ export const useStore = create<AppState>((set, get) => ({
     return payment;
   },
 
-  goTo: (module, customerId) => set({ nav: { module, customerId } }),
+  updateCustomer: (id, name, patch) => {
+    const changed = Object.entries(patch).filter(([, v]) => v !== undefined && v !== '').map(([k]) => k);
+    if (changed.length === 0) return;
+    const at = new Date().toISOString();
+    const entry: AuditEntry = {
+      id: `A-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      at,
+      actor: MUNICIPALITY.user.name,
+      action: 'written-back',
+      role: 'customer-service',
+      proposalId: id,
+      proposalTitle: `Customer update — ${name}`,
+      detail: `Updated ${changed.join(', ')} for ${name}.`,
+    };
+    set((s) => ({
+      customerEdits: { ...s.customerEdits, [id]: { ...s.customerEdits[id], ...patch } },
+      auditLog: [entry, ...s.auditLog],
+    }));
+  },
+
+  goTo: (module, customerId, intent) => set({ nav: { module, customerId, intent } }),
   clearNav: () => set({ nav: null }),
 
-  reset: () => set({ proposals: [], auditLog: [], runs: [], posts: [], effects: [] }),
+  reset: () => set({ proposals: [], auditLog: [], runs: [], posts: [], effects: [], customerEdits: {} }),
 }));

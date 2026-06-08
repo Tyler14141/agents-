@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { RESIDENTS, UTILITY_ACCOUNTS, TAX_ACCOUNTS, RECEIPTS } from '../../data/municipal';
 import { useStore, paidFor, type PostedPayment } from '../../store';
 
+const blankEdit = { mailingAddress: '', phone: '', email: '' };
+
 function usd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
@@ -11,6 +13,8 @@ type PayTarget = { type: 'utility' | 'tax'; accountId: string; balance: number }
 export function CustomerSearchScreen() {
   const posts = useStore((s) => s.posts);
   const postPayment = useStore((s) => s.postPayment);
+  const customerEdits = useStore((s) => s.customerEdits);
+  const updateCustomer = useStore((s) => s.updateCustomer);
   const nav = useStore((s) => s.nav);
   const clearNav = useStore((s) => s.clearNav);
 
@@ -21,15 +25,32 @@ export function CustomerSearchScreen() {
   const [amount, setAmount] = useState('');
   const [tender, setTender] = useState<'Cash' | 'Check' | 'Credit'>('Cash');
   const [justPosted, setJustPosted] = useState<PostedPayment | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(blankEdit);
+  const [savedInfo, setSavedInfo] = useState(false);
 
-  // Deep-link: when the assistant routes here with a customer, preselect them.
+  const addrOf = (id: string, base?: string) => customerEdits[id]?.mailingAddress ?? base ?? '';
+
+  function openEdit(id: string) {
+    const r = RESIDENTS.find((x) => x.id === id);
+    const e = customerEdits[id] ?? {};
+    setForm({ mailingAddress: e.mailingAddress ?? r?.mailingAddress ?? '', phone: e.phone ?? r?.phone ?? '', email: e.email ?? r?.email ?? '' });
+    setEditing(true);
+    setSavedInfo(false);
+  }
+
+  // Deep-link: when the assistant routes here with a customer, preselect (and optionally edit).
   useEffect(() => {
     if (nav?.module === 'cs' && nav.customerId) {
       setSel(nav.customerId);
       setQ('');
+      setPay(null);
+      if (nav.intent === 'edit') openEdit(nav.customerId);
+      else setEditing(false);
       clearNav();
     }
-  }, [nav, clearNav]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nav]);
 
   const rows = useMemo(() => {
     const baseRows = RESIDENTS.map((r) => {
@@ -37,14 +58,15 @@ export function CustomerSearchScreen() {
       const t = TAX_ACCOUNTS.find((x) => x.id === r.taxAccountId);
       const water = Math.max(0, (u?.balance ?? 0) - (u ? paidFor(posts, 'utility', u.id) : 0));
       const tax = Math.max(0, (t?.balance ?? 0) - (t ? paidFor(posts, 'tax', t.id) : 0));
-      return { id: r.id, name: r.name, address: r.mailingAddress, utilityId: u?.id, taxId: t?.id, uStatus: u?.status, tStatus: t?.status, water, tax, total: water + tax };
+      return { id: r.id, name: r.name, address: addrOf(r.id, r.mailingAddress), utilityId: u?.id, taxId: t?.id, uStatus: u?.status, tStatus: t?.status, water, tax, total: water + tax };
     });
     const s = q.trim().toLowerCase();
     return baseRows
       .filter((r) => (owingOnly ? r.total > 0 : true))
       .filter((r) => (!s ? true : `${r.name} ${r.address} ${r.utilityId ?? ''} ${r.taxId ?? ''} ${r.id}`.toLowerCase().includes(s)))
       .sort((a, b) => b.total - a.total);
-  }, [q, owingOnly, posts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, owingOnly, posts, customerEdits]);
 
   // System-wide totals (independent of the current filter), net of posted payments.
   const allEff = RESIDENTS.map((r) => {
@@ -60,6 +82,10 @@ export function CustomerSearchScreen() {
   const filteredOwing = rows.reduce((s, r) => s + r.total, 0);
 
   const selected = rows.find((r) => r.id === sel) ?? null;
+  const selRes = selected ? RESIDENTS.find((x) => x.id === selected.id) : null;
+  const selEdit = selected ? customerEdits[selected.id] : undefined;
+  const selPhone = selEdit?.phone ?? selRes?.phone ?? '';
+  const selEmail = selEdit?.email ?? selRes?.email ?? '';
   const selReceipts = selected ? RECEIPTS.filter((rc) => rc.residentId === selected.id).slice(0, 2) : [];
   const selPosts = selected ? posts.filter((p) => p.residentId === selected.id) : [];
 
@@ -67,6 +93,7 @@ export function CustomerSearchScreen() {
     setPay({ type, accountId, balance });
     setAmount(balance.toFixed(2));
     setJustPosted(null);
+    setEditing(false);
   }
   function submitPay() {
     if (!selected || !pay) return;
@@ -75,6 +102,18 @@ export function CustomerSearchScreen() {
     const p = postPayment({ accountType: pay.type, accountId: pay.accountId, residentId: selected.id, residentName: selected.name, amount: amt, tender });
     setJustPosted(p);
     setPay(null);
+  }
+  function saveEdit() {
+    if (!selected) return;
+    const r = RESIDENTS.find((x) => x.id === selected.id);
+    const patch: { mailingAddress?: string; phone?: string; email?: string } = {};
+    if (form.mailingAddress && form.mailingAddress !== r?.mailingAddress) patch.mailingAddress = form.mailingAddress;
+    if (form.phone !== (r?.phone ?? '')) patch.phone = form.phone;
+    if (form.email !== (r?.email ?? '')) patch.email = form.email;
+    updateCustomer(selected.id, selected.name, patch);
+    setEditing(false);
+    setSavedInfo(true);
+    setTimeout(() => setSavedInfo(false), 2600);
   }
 
   return (
@@ -108,7 +147,7 @@ export function CustomerSearchScreen() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className={r.id === sel ? 'row-sel' : ''} onClick={() => { setSel(r.id); setPay(null); setJustPosted(null); }}>
+              <tr key={r.id} className={r.id === sel ? 'row-sel' : ''} onClick={() => { setSel(r.id); setPay(null); setJustPosted(null); setEditing(false); setSavedInfo(false); }}>
                 <td>{r.name}</td>
                 <td className={`num ${r.water > 0 ? 'neg' : ''}`}>{usd(r.water)}</td>
                 <td className={`num ${r.tax > 0 ? 'neg' : ''}`}>{usd(r.tax)}</td>
@@ -124,8 +163,35 @@ export function CustomerSearchScreen() {
 
         {selected ? (
           <div className="mod-detail card card-pad">
-            <h3>{selected.name}</h3>
-            <div className="kv"><span>Address</span><b style={{ textAlign: 'right' }}>{selected.address}</b></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h3 style={{ margin: 0, flex: 1 }}>{selected.name}</h3>
+              {!editing && <button className="btn btn-sm" onClick={() => openEdit(selected.id)}>✎ Edit info</button>}
+            </div>
+
+            {editing ? (
+              <div className="pay-form" style={{ marginTop: 10 }}>
+                <div className="pay-form-title">Change information — {selected.name}</div>
+                <label className="edit-label">Mailing address</label>
+                <input className="edit-input" value={form.mailingAddress} onChange={(e) => setForm({ ...form, mailingAddress: e.target.value })} />
+                <label className="edit-label">Phone</label>
+                <input className="edit-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <label className="edit-label">Email</label>
+                <input className="edit-input" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <div className="pay-form-actions">
+                  <button className="btn btn-green btn-sm" onClick={saveEdit}>Save changes</button>
+                  <button className="btn btn-sm" onClick={() => setEditing(false)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="kv"><span>Address</span><b style={{ textAlign: 'right' }}>{selected.address}</b></div>
+                {selPhone && <div className="kv"><span>Phone</span><b>{selPhone}</b></div>}
+                {selEmail && <div className="kv"><span>Email</span><b>{selEmail}</b></div>}
+              </>
+            )}
+
+            {savedInfo && <div className="pay-posted">✓ Contact information updated and logged to the Audit Trail.</div>}
+
             <div className="kv">
               <span>💧 Water {selected.utilityId ? `(${selected.utilityId})` : ''}</span>
               <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
