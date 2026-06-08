@@ -344,7 +344,14 @@ table.data tr:last-child td { border-bottom: none; }
   display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .assistant-iconbtn:hover { background: rgba(255,255,255,.28); }
 
-.assistant-body { flex: 1; overflow-y: auto; padding: 16px; background: #f7f8fb; display: flex; flex-direction: column; gap: 12px; }
+.assistant-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; background: #f7f8fb; display: flex; flex-direction: column; gap: 12px; }
+
+/* Compact proposal cards inside the chat: keep the panel usable. */
+.proposal.compact { padding: 12px 14px; }
+.proposal.compact .confidence { display: none; }
+.proposal.compact .sources { display: none; }
+.proposal.compact .action-note { font-size: 11.5px; padding: 6px 9px; }
+.proposal.compact .draft-box { max-height: 168px; overflow: auto; font-size: 12px; }
 
 /* welcome state */
 .welcome { text-align: center; padding: 14px 8px; }
@@ -370,7 +377,7 @@ table.data tr:last-child td { border-bottom: none; }
 .msg-avatar { width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff;
   background: linear-gradient(135deg,#6c5ce7,#0f9b8e); }
 .bubble { padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
-.bubble.assistant { background: #fff; border: 1px solid var(--line); border-top-left-radius: 5px; color: var(--ink); box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+.bubble.agent { background: #fff; border: 1px solid var(--line); border-top-left-radius: 5px; color: var(--ink); box-shadow: 0 1px 2px rgba(16,24,40,.04); }
 .bubble.user { background: linear-gradient(135deg,#6c5ce7,#5a72e0); color: #fff; border-top-right-radius: 5px; max-width: 86%; }
 .bubble.typing { display: flex; gap: 4px; align-items: center; }
 .bubble.typing span { width: 7px; height: 7px; border-radius: 50%; background: #b9c2cc; animation: blink 1.2s infinite; }

@@ -53,7 +53,7 @@ export const STARTERS: StarterPrompt[] = [
 ];
 
 export const WELCOME =
-  "I'm the TRIO Assistant — a governed agent over TRIO + CAMA. I read your systems of record and draft work for you to approve; I never post on my own. Where should we start?";
+  "I'm the TRIO Assistant — a governed agent over your TRIO systems. I read your systems of record and draft work for you to approve; I never post on my own. Where should we start?";
 
 function usd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });

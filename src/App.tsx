@@ -160,7 +160,7 @@ export default function App() {
             <span className="agents-topbar-icon">✦</span>
             <div>
               <div className="agents-topbar-title">TRIO Agents</div>
-              <div className="agents-topbar-sub">Governed operating layer over TRIO + CAMA · {MUNICIPALITY.name}</div>
+              <div className="agents-topbar-sub">Governed operating layer over TRIO · {MUNICIPALITY.name}</div>
             </div>
             <div style={{ flex: 1 }} />
             {toggle}

@@ -1,4 +1,4 @@
-# TRIO + CAMA Operating Layer — Prototype
+# TRIO — Governed Agent Operating Layer (Prototype)
 
 A working prototype of the **governed AI operating layer** over Harris **TRIO** (municipal
 administration) and **CAMA** (assessment/valuation) for small municipal government, modeled on the

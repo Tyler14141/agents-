@@ -118,7 +118,7 @@ export function TrioAssistant({ screen }: { screen: string }) {
 
     // Free-form question + live Claude API configured -> real model answer.
     if (live && !r.matched) {
-      setItems((prev) => [...prev, { id: nid(), role: 'steps', steps: ['Reading systems of record', 'Reasoning over TRIO + CAMA data', 'Composing answer'] }]);
+      setItems((prev) => [...prev, { id: nid(), role: 'steps', steps: ['Reading systems of record', 'Reasoning over TRIO data', 'Composing answer'] }]);
       try {
         const answer = await askLLM([...history, { role: 'user', content: text }]);
         setItems((prev) => [...prev, { id: nid(), role: 'text', text: answer }]);
@@ -226,7 +226,7 @@ export function TrioAssistant({ screen }: { screen: string }) {
                   <div key={it.id} className="bubble-row">
                     <div className="assistant-msg">
                       <div className="msg-avatar">✦</div>
-                      <div className="bubble assistant"><StreamingText text={it.text} /></div>
+                      <div className="bubble agent"><StreamingText text={it.text} /></div>
                     </div>
                   </div>
                 );
@@ -242,7 +242,7 @@ export function TrioAssistant({ screen }: { screen: string }) {
             <div className="bubble-row">
               <div className="assistant-msg">
                 <div className="msg-avatar">✦</div>
-                <div className="bubble assistant typing"><span /><span /><span /></div>
+                <div className="bubble agent typing"><span /><span /><span /></div>
               </div>
             </div>
           )}
