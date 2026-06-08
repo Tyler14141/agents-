@@ -6,6 +6,18 @@ import {
   RECEIPTS,
   INQUIRIES,
   EXCEPTIONS,
+  LIENS,
+  PARCELS,
+  BUDGET_LINES,
+  REVENUE_LINES,
+  EMPLOYEES,
+  PAY_RUN,
+  payFor,
+  KNOWLEDGE,
+  CODE_CASES,
+  AGENDA_SUBMISSIONS,
+  RECORDS_REQUESTS,
+  CONTROL_EVENTS,
 } from '../data/municipal';
 import { runCustomerServiceAgent } from '../agents/customerService';
 import { runFinanceAgent } from '../agents/finance';
@@ -110,6 +122,63 @@ const TOPIC_TO_INQUIRY: { keywords: string[]; id: string }[] = [
   { keywords: ['move', 'final bill', 'closing', 'close account', 'move-out'], id: 'IN-204' },
   { keywords: ['lien', 'tax sale'], id: 'IN-205' },
 ];
+
+// ---- universal search + receivables --------------------------------------
+
+function resName(id?: string): string {
+  return id ? RESIDENTS.find((r) => r.id === id)?.name ?? id : 'walk-in';
+}
+
+/** Searches every dataset in the demo and returns formatted match lines. */
+function searchAll(q: string): string[] {
+  const groups: { label: string; rows: { key: string; out: string }[] }[] = [
+    { label: 'Residents', rows: RESIDENTS.map((r) => ({ key: `${r.id} ${r.name} ${r.mailingAddress} ${r.phone ?? ''} ${r.email ?? ''}`, out: `${r.name} — ${r.mailingAddress}${r.phone ? ` · ${r.phone}` : ''}` })) },
+    { label: 'Utility accounts', rows: UTILITY_ACCOUNTS.map((u) => ({ key: `${u.id} ${u.serviceAddress} ${u.status} ${resName(u.residentId)}`, out: `${u.id} ${u.serviceAddress} (${resName(u.residentId)}) — ${usd(u.balance)}, ${u.status}${u.pastDueDays ? `, ${u.pastDueDays}d past due` : ''}` })) },
+    { label: 'Tax accounts', rows: TAX_ACCOUNTS.map((t) => ({ key: `${t.id} ${t.parcelId} ${t.status} ${resName(t.residentId)}`, out: `${t.id} parcel ${t.parcelId} (${resName(t.residentId)}) — ${usd(t.balance)}, ${t.status}` })) },
+    { label: 'Tax liens', rows: LIENS.map((l) => ({ key: `${l.id} ${l.parcelId} ${l.owner}`, out: `${l.id} ${l.parcelId} ${l.owner} — forecloses ${l.foreclosureDate}, redemption ${usd(l.principal + l.interestAndCosts)}` })) },
+    { label: 'Parcels (CAMA)', rows: PARCELS.map((p) => ({ key: `${p.id} ${p.situsAddress} ${resName(p.residentId)} ${p.permitOpen ?? ''}`, out: `${p.id} ${p.situsAddress} — value ${usd(p.landValue + p.buildingValue)}${p.permitOpen ? `, permit ${p.permitOpen}` : ''}` })) },
+    { label: 'Receipts', rows: RECEIPTS.map((rc) => ({ key: `${rc.id} ${rc.description} ${rc.module} ${rc.tender} ${resName(rc.residentId)}`, out: `${rc.id} ${rc.date} ${rc.description} — ${usd(rc.amount)} ${rc.tender}` })) },
+    { label: 'Budget lines', rows: BUDGET_LINES.map((b) => ({ key: `${b.account} ${b.department} ${b.description}`, out: `${b.account} ${b.description} (${b.department}) — budget ${usd(b.budget)}, committed ${usd(b.actual + b.encumbered)}` })) },
+    { label: 'Revenues', rows: REVENUE_LINES.map((r) => ({ key: `${r.account} ${r.source}`, out: `${r.account} ${r.source} — budget ${usd(r.budget)}, collected ${usd(r.actual)}` })) },
+    { label: 'Employees & pay', rows: PAY_RUN.lines.map((l) => { const e = EMPLOYEES.find((x) => x.id === l.employeeId)!; const pay = payFor(e, l); return { key: `${e.id} ${e.name} ${e.department} ${e.position}`, out: `${e.name} — ${e.position}, ${e.department} (${e.type === 'salary' ? `${usd(e.rate)}/yr` : `${usd(e.rate)}/hr`}); this run gross ${usd(pay.gross)}, OT ${l.otHours}h` }; }) },
+    { label: 'Exceptions', rows: EXCEPTIONS.map((x) => ({ key: `${x.id} ${x.module} ${x.severity} ${x.description}`, out: `[${x.severity}] ${x.module}: ${x.description}` })) },
+    { label: 'Inquiries', rows: INQUIRIES.map((i) => ({ key: `${i.id} ${i.contactName} ${i.subject} ${i.body} ${i.channel}`, out: `${i.id} (${i.channel}) ${i.contactName}: ${i.subject}` })) },
+    { label: 'Code cases', rows: CODE_CASES.map((c) => ({ key: `${c.id} ${c.address} ${c.type} ${c.description} ${c.status}`, out: `${c.id} ${c.address} — ${c.type}, ${c.status} (${c.ageDays}d)` })) },
+    { label: 'Agenda items', rows: AGENDA_SUBMISSIONS.map((a) => ({ key: `${a.id} ${a.title} ${a.department} ${a.type}`, out: `${a.id} ${a.title} (${a.department})` })) },
+    { label: 'Records requests', rows: RECORDS_REQUESTS.map((r) => ({ key: `${r.id} ${r.requester} ${r.subject} ${r.status}`, out: `${r.id} ${r.requester}: ${r.subject} — due ${r.dueBy} (${r.status})` })) },
+    { label: 'Control signals', rows: CONTROL_EVENTS.map((c) => ({ key: `${c.id} ${c.module} ${c.actor} ${c.detail} ${c.type}`, out: `[${c.risk}] ${c.module}: ${c.detail}` })) },
+    { label: 'Knowledge base', rows: KNOWLEDGE.map((k) => ({ key: `${k.id} ${k.title} ${k.category} ${k.keywords.join(' ')} ${k.content}`, out: `${k.id} ${k.title} (${k.category})` })) },
+  ];
+  const terms = q.split(/\s+/).filter((t) => t.length >= 2);
+  const match = (key: string) => { const k = key.toLowerCase(); return k.includes(q) || (terms.length > 0 && terms.every((t) => k.includes(t))); };
+  const out: string[] = [];
+  let total = 0;
+  for (const g of groups) {
+    const hits = g.rows.filter((r) => match(r.key)).slice(0, 5);
+    if (hits.length) { out.push(`${g.label}:`); for (const h of hits) out.push(`  • ${h.out}`); total += hits.length; }
+    if (total >= 18) break;
+  }
+  return out;
+}
+
+function owingSummary(): string {
+  const rows = RESIDENTS.map((r) => {
+    const u = UTILITY_ACCOUNTS.find((x) => x.id === r.utilityAccountId);
+    const tx = TAX_ACCOUNTS.find((x) => x.id === r.taxAccountId);
+    return { name: r.name, water: u?.balance ?? 0, tax: tx?.balance ?? 0 };
+  }).map((x) => ({ ...x, total: x.water + x.tax })).filter((x) => x.total > 0).sort((a, b) => b.total - a.total);
+  const water = rows.reduce((s, r) => s + r.water, 0);
+  const tax = rows.reduce((s, r) => s + r.tax, 0);
+  return [
+    `Balances owed across TRIO (${rows.length} customers with a balance):`,
+    `• Water (utility) receivable: ${usd(water)}`,
+    `• Property tax receivable: ${usd(tax)}`,
+    `• Total owing: ${usd(water + tax)}`,
+    '',
+    `Top balances:`,
+    ...rows.slice(0, 6).map((r) => `  • ${r.name}: ${usd(r.total)} (water ${usd(r.water)}, tax ${usd(r.tax)})`),
+  ].join('\n');
+}
 
 // ---- main router ---------------------------------------------------------
 
@@ -257,16 +326,34 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
     return reply([], [t('Which topic? I can draft a reply about: the high water bill, a payment plan / shutoff, vehicle registration, a move-out / final bill, or a tax lien.')], ['Draft a reply about the high water bill', 'Draft a reply about a payment plan'], false);
   }
 
+  // balances owed / receivables summary
+  if (q.includes('owing') || q.includes('owe') || q.includes('outstanding') || q.includes('arrears') || q.includes('receivable') || (q.includes('total') && (q.includes('owed') || q.includes('balance')))) {
+    return reply(
+      ['Joining Utility + Tax receivables', 'Summing balances owed'],
+      [t(owingSummary())],
+      ['Look up Maria Delgado', 'What needs attention today?'],
+    );
+  }
+
   // greeting
   if (q === 'hi' || q === 'hello' || q === 'hey' || q.includes('thank')) {
     return reply([], [t('Happy to help. Ask me to look something up, summarize what needs attention, or draft a reply or memo.')], ['What needs attention today?', 'Look up Maria Delgado'], false);
   }
 
-  // fallback — free-form question; routed to the live Claude API when configured.
+  // universal search across every dataset (and, when live, the Claude API).
+  const results = searchAll(q);
+  if (results.length) {
+    return reply(
+      ['Searching all TRIO + CAMA records', 'Collecting matches'],
+      [t([`Here's what I found for “${input.trim()}”:`, '', ...results].join('\n'))],
+      ['How much is owed in total?', 'What needs attention today?'],
+      false,
+    );
+  }
   return reply(
     [],
-    [t(`I'm not sure how to handle that yet. I'm strongest at: account lookups, exception/variance summaries, close checklists, council briefings, and knowledge-grounded resident replies. Type “help” for examples.`)],
-    ['What needs attention today?', 'Triage the inquiries'],
+    [t(`I couldn't find “${input.trim()}” in the records. Try a name, address, account # (U-/T-), parcel, department, or employee — or ask “how much is owed in total?”`)],
+    ['How much is owed in total?', 'Look up Maria Delgado'],
     false,
   );
 }

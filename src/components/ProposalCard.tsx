@@ -15,6 +15,11 @@ export function ProposalCard({ id, compact = false }: { id: string; compact?: bo
 
   if (!p) return null;
   const isPending = p.status === 'pending';
+  const kindLabel = PROPOSAL_KIND_LABEL[p.kind] ?? p.kind;
+  const modules = Array.from(new Set(p.sources.map((s) => s.module)));
+  const didText = p.sources.length
+    ? `Read ${p.sources.length} record${p.sources.length > 1 ? 's' : ''} from ${modules.slice(0, 3).join(', ')}${modules.length > 3 ? ` +${modules.length - 3} more` : ''}, then drafted this ${kindLabel.toLowerCase()}. No system of record was changed.`
+    : `Drafted this ${kindLabel.toLowerCase()} from the systems of record. No system of record was changed.`;
   const shownDraft = p.editedDraft ?? p.draft;
   const lines = shownDraft.split('\n');
   const isLong = lines.length > PREVIEW_LINES;
@@ -31,14 +36,12 @@ export function ProposalCard({ id, compact = false }: { id: string; compact?: bo
     <div className={`card proposal ${p.status} ${compact ? 'compact' : ''}`}>
       <div className="proposal-head">
         <span className="kind-tag">{PROPOSAL_KIND_LABEL[p.kind] ?? p.kind}</span>
-        <div style={{ flex: 1 }}>
-          <p className="title">{p.title}</p>
-          <p className="rationale">{p.rationale}</p>
-        </div>
         <span className={`status-tag ${p.status}`}>
           {p.status === 'pending' ? 'Draft · needs approval' : p.status}
         </span>
       </div>
+      <p className="title">{p.title}</p>
+      <p className="rationale">{p.rationale}</p>
 
       <div className="confidence">
         <span>Confidence</span>
@@ -71,8 +74,18 @@ export function ProposalCard({ id, compact = false }: { id: string; compact?: bo
         </div>
       )}
 
-      <div className="action-note">
-        <b>On approval:</b> {p.suggestedAction}
+      <div className="action-panel">
+        <div className="action-row">
+          <span className="action-ico">🔎</span>
+          <div><span className="action-lbl">What the agent did</span>{didText}</div>
+        </div>
+        <div className={`action-row ${isPending ? '' : p.status === 'rejected' ? 'rej' : 'done'}`}>
+          <span className="action-ico">{isPending ? '➜' : p.status === 'rejected' ? '✕' : '✓'}</span>
+          <div>
+            <span className="action-lbl">{isPending ? 'If you approve' : p.status === 'rejected' ? 'Rejected — nothing changed' : 'What changed'}</span>
+            {p.status === 'rejected' ? 'No system of record was written to.' : p.suggestedAction}
+          </div>
+        </div>
       </div>
 
       <div className="proposal-actions">

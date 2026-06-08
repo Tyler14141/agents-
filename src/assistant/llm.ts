@@ -24,8 +24,13 @@ import {
   LIENS,
   CASH_DRAWERS,
   CONTROL_EVENTS,
+  CODE_CASES,
+  AGENDA_SUBMISSIONS,
+  RECORDS_REQUESTS,
+  NEXT_MEETING,
   payFor,
 } from '../data/municipal';
+import { AUDIT, AUDIT_PLAN } from '../data/audit';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -58,6 +63,10 @@ function dataContext(): string {
     j('INTERNAL_CONTROL_SIGNALS', CONTROL_EVENTS),
     j('OPEN_EXCEPTIONS', EXCEPTIONS),
     j('RESIDENT_INQUIRIES', INQUIRIES),
+    j('CODE_ENFORCEMENT_CASES', CODE_CASES),
+    j(`CLERK_AGENDA_SUBMISSIONS (next meeting ${NEXT_MEETING.body} ${NEXT_MEETING.date})`, AGENDA_SUBMISSIONS),
+    j('CLERK_RECORDS_REQUESTS (FOAA)', RECORDS_REQUESTS),
+    j(`YEAR_END_AUDIT_PLAN (auditor ${AUDIT.auditor}, fieldwork ${AUDIT.fieldworkStart})`, AUDIT_PLAN.flatMap((ph) => ph.steps.map((s) => ({ phase: ph.title, ...s })))),
     j('APPROVED_KNOWLEDGE_BASE', KNOWLEDGE),
   ].join('\n\n');
 }

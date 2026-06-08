@@ -201,7 +201,7 @@ function cashReconciliation(): AgentProposal[] {
     const variance = vCash + vCheck + vCredit;
     const balanced = Math.abs(variance) < 0.005;
     const line = (label: string, exp: number, counted: number, v: number) =>
-      `  ${label.padEnd(7)} expected ${usd(exp)} · counted ${usd(counted)} · ${v === 0 ? 'balanced' : (v > 0 ? 'over ' : 'short ') + usd(Math.abs(v))}`;
+      `• ${label}: expected ${usd(exp)} · counted ${usd(counted)} · ${v === 0 ? 'balanced' : (v > 0 ? 'over ' : 'short ') + usd(Math.abs(v))}`;
     return makeProposal({
       role: 'finance',
       kind: 'cash-recon',
@@ -217,7 +217,7 @@ function cashReconciliation(): AgentProposal[] {
         line('Cash', expCash, d.countedCash, vCash),
         line('Check', expCheck, d.countedCheck, vCheck),
         line('Credit', expCredit, d.countedCredit, vCredit),
-        `  ${'TOTAL'.padEnd(7)} expected ${usd(expCash + expCheck + expCredit)} · counted ${usd(d.countedCash + d.countedCheck + d.countedCredit)} · ${balanced ? 'BALANCED' : (variance > 0 ? 'OVER ' : 'SHORT ') + usd(Math.abs(variance))}`,
+        `Total: expected ${usd(expCash + expCheck + expCredit)} · counted ${usd(d.countedCash + d.countedCheck + d.countedCredit)} · ${balanced ? 'BALANCED' : (variance > 0 ? 'OVER ' : 'SHORT ') + usd(Math.abs(variance))}`,
         '',
         balanced
           ? 'Drawer is in balance; safe to deposit.'

@@ -10,6 +10,7 @@ import { UtilityScreen } from './components/screens/UtilityScreen';
 import { BudgetaryScreen } from './components/screens/BudgetaryScreen';
 import { PayrollScreen } from './components/screens/PayrollScreen';
 import { YearEndAuditScreen } from './components/screens/YearEndAuditScreen';
+import { CustomerSearchScreen } from './components/screens/CustomerSearchScreen';
 import { useStore } from './store';
 import { MUNICIPALITY } from './data/municipal';
 
@@ -20,6 +21,7 @@ type Theme = 'modern' | 'classic';
 const MODULES = [
   { id: 'cr', label: 'Cash Receipting', icon: 'T', color: '#0f9b8e', active: true },
   { id: 'agents', label: 'Agents', icon: '✦', color: '#6c5ce7', active: true },
+  { id: 'cs', label: 'Customer Search', icon: '🎧', color: '#0e9488', active: true },
   { id: 'mv', label: 'Motor Vehicle', icon: '🚗', color: '#2e75b6', active: true },
   { id: 'tax', label: 'Tax', icon: '🧾', color: '#c0392b', active: true },
   { id: 'ub', label: 'Utility Billing', icon: '💧', color: '#2980b9', active: true },
@@ -31,6 +33,16 @@ const MODULES = [
 ];
 
 const MODULE_DEFS: Record<string, TrioModuleDef> = {
+  cs: {
+    brand: 'CUSTOMER SERVICE',
+    menu: [
+      { label: 'Customer Search', active: true }, { label: 'Take Payment' }, { label: 'Account Lookup' },
+      { label: 'Inquiries' }, { label: 'Statements' },
+      { label: 'Reports', section: true },
+      { label: 'Balances Owed', indent: true }, { label: 'Receipts by Customer', indent: true },
+    ],
+    tabs: [{ id: 'search', label: 'Customer Search', color: '#0e9488', Screen: CustomerSearchScreen }],
+  },
   cr: {
     brand: 'CASH RECEIPTING',
     menu: [
