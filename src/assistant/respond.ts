@@ -60,7 +60,7 @@ export interface StarterPrompt {
 
 export const STARTERS: StarterPrompt[] = [
   { icon: '⚠️', title: 'What needs attention?', subtitle: 'Cross-module exception summary', prompt: 'What needs attention today?' },
-  { icon: '🔎', title: 'Look up a resident', subtitle: 'Balances across TRIO modules', prompt: 'Look up Maria Delgado' },
+  { icon: '🔎', title: 'Look up a resident', subtitle: 'Balances across TRIO modules', prompt: 'look up a resident' },
   { icon: '✍️', title: 'Draft a reply', subtitle: 'Knowledge-grounded response', prompt: 'Draft a reply about the high water bill' },
   { icon: '📊', title: 'Run a report', subtitle: 'Choose which report', prompt: 'run a report' },
 ];
@@ -232,6 +232,15 @@ export function respond(input: string, _ctx: AssistantContext): Reply {
   // lookup
   if (q.includes('look up') || q.includes('lookup') || q.includes('find ') || q.startsWith('who is') || /\b(u-|t-|r-)\d/.test(q)) {
     const query = q.replace(/.*(look up|lookup|find|who is)/, '').trim() || q;
+    // No name given (e.g. the "Look up a resident" starter) -> ask for one.
+    const GENERIC = ['', 'a resident', 'resident', 'a customer', 'customer', 'someone', 'a person', 'person', 'an account', 'account', 'a resident.'];
+    if (GENERIC.includes(query)) {
+      return reply(
+        [],
+        [t("Sure — what's the resident's name? You can give a name, address, or account # (U-…, T-…, R-…).")],
+        ['Look up Maria Delgado', 'Look up Robert & Anne Thibodeau', 'Look up Northern Maine Realty LLC'],
+      );
+    }
     const r = findResident(query);
     if (r) {
       return reply(
