@@ -39,6 +39,7 @@ export function utilityUsageScan(): AgentProposal[] {
           rationale: `${last.period} read of ${last.ccf} CCF is ${(last.ccf / Math.max(1, base)).toFixed(1)}× the ~${base} CCF baseline.`,
           confidence: 0.83,
           sources: [src(u)],
+          effect: { targetType: 'utility', targetId: u.id, label: 'Billing hold — re-read scheduled' },
           suggestedAction: `Hold the bill for ${u.id}, schedule a re-read, and send the resident the high-usage notice + leak-adjustment form.`,
           draft: [
             `${residentName(u.residentId)} — ${u.serviceAddress} (account ${u.id})`,
@@ -60,6 +61,7 @@ export function utilityUsageScan(): AgentProposal[] {
           rationale: `${last.period} read of ${last.ccf} CCF is far below the ~${base} CCF baseline — possible stopped meter, vacancy, or misread.`,
           confidence: 0.78,
           sources: [src(u)],
+          effect: { targetType: 'utility', targetId: u.id, label: 'Billing hold — meter check' },
           suggestedAction: `Hold the bill for ${u.id} and dispatch a re-read / meter check before billing.`,
           draft: [
             `${residentName(u.residentId)} — ${u.serviceAddress} (account ${u.id})`,
@@ -128,6 +130,7 @@ export function utilityDelinquency(): AgentProposal[] {
           rationale: `${usd(u.balance)} past due, ${u.pastDueDays} days delinquent.`,
           confidence: 0.8,
           sources: [src(u)],
+          effect: { targetType: 'utility', targetId: u.id, label: 'Shutoff queued · arrangement offered' },
           suggestedAction: `Queue ${u.id} for the shutoff list and send the payment-arrangement outreach below.`,
           draft: [
             `${residentName(u.residentId)} — ${u.serviceAddress} (account ${u.id})`,
@@ -156,6 +159,7 @@ export function utilityFinalBills(): AgentProposal[] {
           rationale: `Account marked final (move-out) with ${usd(u.balance)} outstanding and no final bill sent.`,
           confidence: 0.86,
           sources: [src(u)],
+          effect: { targetType: 'utility', targetId: u.id, label: 'Final bill sent' },
           suggestedAction: `Generate the final bill for ${u.id} and request a forwarding address + deposit refund.`,
           draft: [
             `${residentName(u.residentId)} — ${u.serviceAddress} (account ${u.id})`,

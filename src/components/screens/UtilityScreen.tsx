@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UTILITY_ACCOUNTS, RESIDENTS, estimateBill, utilityBaseline, utilityFlag } from '../../data/municipal';
-import { useStore, paidFor } from '../../store';
+import { useStore, paidFor, effectsFor } from '../../store';
 
 function usd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -11,7 +11,9 @@ export function UtilityScreen() {
   const [sel, setSel] = useState(UTILITY_ACCOUNTS[0].id);
   const acct = UTILITY_ACCOUNTS.find((u) => u.id === sel)!;
   const posts = useStore((s) => s.posts);
+  const effects = useStore((s) => s.effects);
   const bal = (id: string, base: number) => Math.max(0, base - paidFor(posts, 'utility', id));
+  const acctEffects = effectsFor(effects, 'utility', acct.id);
   const maxCcf = Math.max(...acct.usage.map((u) => u.ccf), 1);
   const acctFlag = utilityFlag(acct);
   const acctLast = acct.usage[acct.usage.length - 1]?.ccf ?? 0;
@@ -48,7 +50,7 @@ export function UtilityScreen() {
                   <td>{u.serviceAddress}</td>
                   <td className="num">{usd(bal(u.id, u.balance))}</td>
                   <td>{f === 'high' ? <span className="tag high">⚠ High</span> : f === 'low' ? <span className="tag medium">⚠ Low</span> : <span className="muted">ok</span>}</td>
-                  <td><span className={`tag ${u.status}`}>{u.status}</span></td>
+                  <td><span className={`tag ${u.status}`}>{u.status}</span>{effectsFor(effects, 'utility', u.id).length > 0 && <span className="applied-dot" title="agent action applied">●</span>}</td>
                 </tr>
               );
             })}
@@ -63,6 +65,11 @@ export function UtilityScreen() {
           <div className="kv"><span>Past due</span><b>{acct.pastDueDays} days</b></div>
           <div className="kv"><span>Last read</span><b>{acct.lastReadDate}</b></div>
           <div className="kv"><span>Est. current bill</span><b>{usd(estimateBill(acctLast))}</b></div>
+          {acctEffects.length > 0 && (
+            <div className="applied-effects">
+              {acctEffects.map((e) => <span key={e.id} className="applied-chip" title={`Applied ${new Date(e.at).toLocaleString()} by ${e.by}`}>✓ {e.label}</span>)}
+            </div>
+          )}
 
           {acctFlag && (
             <div className={`usage-alert ${acctFlag}`}>

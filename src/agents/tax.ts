@@ -37,6 +37,7 @@ export function taxDelinquency(): AgentProposal[] {
       rationale: `${usd(t.balance)} outstanding; last payment ${t.lastPayment?.date ?? 'n/a'}. Lien notice window approaching.`,
       confidence: 0.82,
       sources: [src(t)],
+      effect: { targetType: 'tax', targetId: t.id, label: 'Delinquency notice sent' },
       suggestedAction: `Queue the delinquency notice for ${t.id} and record the notice date in Tax Collections.`,
       draft: [
         `NOTICE OF DELINQUENT PROPERTY TAXES`,
@@ -150,6 +151,7 @@ export function taxLienWatch(): AgentProposal[] {
         rationale: `Lien forecloses in ${d} days (${l.foreclosureDate}); redemption ${usd(l.principal + l.interestAndCosts)}.`,
         confidence: 0.84,
         sources: [{ system: 'TRIO', module: 'Tax Collections', recordId: l.id, label: `${l.id} (${l.parcelId})` }],
+        effect: { targetType: 'tax', targetId: l.taxAccountId, label: 'Pre-foreclosure notice sent' },
         suggestedAction: `Send certified final notice to ${l.owner} and escalate to Treasurer + legal; record proof of mailing.`,
         draft: [
           `FINAL NOTICE — IMPENDING TAX LIEN FORECLOSURE`,

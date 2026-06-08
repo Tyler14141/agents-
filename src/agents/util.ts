@@ -1,4 +1,4 @@
-import type { AgentProposal, ProposalKind, AgentRole, SourceRef } from '../types';
+import type { AgentProposal, ProposalKind, AgentRole, SourceRef, ProposalEffect } from '../types';
 
 let seq = 0;
 /** Deterministic-ish id for generated proposals within a run. */
@@ -24,6 +24,7 @@ export interface DraftInput {
   suggestedAction: string;
   confidence: number;
   sources: SourceRef[];
+  effect?: ProposalEffect;
 }
 
 export function makeProposal(input: DraftInput): AgentProposal {

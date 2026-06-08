@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TAX_ACCOUNTS, RESIDENTS } from '../../data/municipal';
-import { useStore, paidFor } from '../../store';
+import { useStore, paidFor, effectsFor } from '../../store';
 
 function usd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -11,7 +11,9 @@ export function TaxScreen() {
   const [sel, setSel] = useState(TAX_ACCOUNTS[0].id);
   const acct = TAX_ACCOUNTS.find((t) => t.id === sel)!;
   const posts = useStore((s) => s.posts);
+  const effects = useStore((s) => s.effects);
   const bal = (id: string, base: number) => Math.max(0, base - paidFor(posts, 'tax', id));
+  const acctEffects = effectsFor(effects, 'tax', acct.id);
 
   return (
     <div className="tr-screen mod-screen">
@@ -25,7 +27,7 @@ export function TaxScreen() {
                 <td>{t.id}</td>
                 <td>{owner(t.residentId)}</td>
                 <td className="num">{usd(bal(t.id, t.balance))}</td>
-                <td><span className={`tag ${t.status}`}>{t.status}</span></td>
+                <td><span className={`tag ${t.status}`}>{t.status}</span>{effectsFor(effects, 'tax', t.id).length > 0 && <span className="applied-dot" title="agent action applied">●</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -39,6 +41,11 @@ export function TaxScreen() {
           <div className="kv"><span>Balance due</span><b className={bal(acct.id, acct.balance) > 0 ? 'neg' : ''}>{usd(bal(acct.id, acct.balance))}</b></div>
           <div className="kv"><span>Status</span><b><span className={`tag ${acct.status}`}>{acct.status}</span></b></div>
           {acct.lastPayment && <div className="kv"><span>Last payment</span><b>{acct.lastPayment.date} · {usd(acct.lastPayment.amount)}</b></div>}
+          {acctEffects.length > 0 && (
+            <div className="applied-effects">
+              {acctEffects.map((e) => <span key={e.id} className="applied-chip" title={`Applied ${new Date(e.at).toLocaleString()} by ${e.by}`}>✓ {e.label}</span>)}
+            </div>
+          )}
           <div className="mod-detail-actions">
             <button className="btn btn-sm btn-primary">Post Payment</button>
             <button className="btn btn-sm">Adjust</button>

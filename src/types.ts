@@ -325,6 +325,13 @@ export interface SourceRef {
 
 export type ProposalStatus = 'pending' | 'approved' | 'edited' | 'rejected';
 
+/** A concrete state change applied to a record when a proposal is approved. */
+export interface ProposalEffect {
+  targetType: 'utility' | 'tax' | 'inquiry' | 'drawer';
+  targetId: string;
+  label: string; // e.g. "Final bill sent", "Billing hold", "Lien notice sent"
+}
+
 export interface AgentProposal {
   id: string;
   role: AgentRole;
@@ -344,6 +351,8 @@ export interface AgentProposal {
   resolvedBy?: string;
   /** Populated when a reviewer edits before approving. */
   editedDraft?: string;
+  /** Concrete record change applied to the system of record on approval. */
+  effect?: ProposalEffect;
 }
 
 export type AuditAction =

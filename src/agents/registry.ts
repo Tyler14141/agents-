@@ -168,6 +168,8 @@ export const AGENTS: AgentDef[] = [
 
 export const AGENT_MAP: Record<string, AgentDef> = Object.fromEntries(AGENTS.map((a) => [a.role, a]));
 
+export const ROLE_LABEL: Record<string, string> = Object.fromEntries(AGENTS.map((a) => [a.role, a.shortName]));
+
 export function findTask(role: AgentRole, taskId: string): TaskDef | undefined {
   return AGENT_MAP[role]?.tasks.find((t) => t.id === taskId);
 }

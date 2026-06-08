@@ -1,7 +1,35 @@
 import { create } from 'zustand';
-import type { AgentProposal, AgentRole, AgentRun, AuditEntry } from './types';
+import type { AgentProposal, AgentRole, AgentRun, AuditEntry, ProposalEffect } from './types';
 import { AGENT_MAP, findTask } from './agents/registry';
 import { MUNICIPALITY } from './data/municipal';
+
+/** A record change applied to the system of record when a proposal was approved. */
+export interface AppliedEffect extends ProposalEffect {
+  id: string;
+  at: string;
+  by: string;
+  proposalId: string;
+  proposalTitle: string;
+}
+
+export function effectsFor(effects: AppliedEffect[], targetType: ProposalEffect['targetType'], targetId: string): AppliedEffect[] {
+  return effects.filter((e) => e.targetType === targetType && e.targetId === targetId);
+}
+
+const minsAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+
+/** A little prior activity so the audit log isn't empty on first load. */
+function seedAudit(): AuditEntry[] {
+  const a = MUNICIPALITY.user.name;
+  return [
+    { id: 'A-seed-1', at: minsAgo(8), actor: a, action: 'written-back', role: 'customer-service', proposalId: 'RC-PSEED1', proposalTitle: 'Payment RC-PSEED1', detail: 'Posted $80.00 Check to utility account U-5013 (Maria Delgado); receipt created.' },
+    { id: 'A-seed-2', at: minsAgo(35), actor: a, action: 'approved', role: 'finance', proposalId: 'P-seed-2', proposalTitle: 'Over budget: 01-4155-220 IT & Software Licensing', detail: `Approved by ${a}.` },
+    { id: 'A-seed-3', at: minsAgo(36), actor: a, action: 'written-back', role: 'finance', proposalId: 'P-seed-2', proposalTitle: 'Over budget: 01-4155-220 IT & Software Licensing', detail: 'Attached variance note to 01-4155-220 and flagged for transfer review.' },
+    { id: 'A-seed-4', at: minsAgo(90), actor: a, action: 'generated', role: 'utility', proposalId: 'P-seed-4', proposalTitle: 'High-usage exception: U-5013 (14 Spruce Lane)', detail: 'Utility Billing Agent drafted from 1 source record.' },
+    { id: 'A-seed-5', at: minsAgo(92), actor: a, action: 'rejected', role: 'utility', proposalId: 'P-seed-5', proposalTitle: 'Low/zero-usage exception: U-5021', detail: 'Rejected: meter confirmed working; seasonal vacancy.' },
+    { id: 'A-seed-6', at: minsAgo(140), actor: a, action: 'written-back', role: 'tax', proposalId: 'P-seed-6', proposalTitle: 'Delinquency notice: T-3090', detail: 'Delinquency notice sent · recorded on T-3090.' },
+  ];
+}
 
 function audit(p: AgentProposal, action: AuditEntry['action'], detail: string): AuditEntry {
   return {
@@ -51,6 +79,7 @@ interface AppState {
   auditLog: AuditEntry[];
   runs: AgentRun[];
   posts: PostedPayment[];
+  effects: AppliedEffect[];
   nav: NavTarget | null;
   /** Key of the task currently executing, e.g. "finance:variance" or "finance:all". */
   runningKey: string | null;
@@ -72,9 +101,10 @@ interface AppState {
 export const useStore = create<AppState>((set, get) => ({
   currentRole: 'finance',
   proposals: [],
-  auditLog: [],
+  auditLog: seedAudit(),
   runs: [],
   posts: [],
+  effects: [],
   nav: null,
   runningKey: null,
 
@@ -168,9 +198,25 @@ export const useStore = create<AppState>((set, get) => ({
     if (edited) entries.push(audit(resolved, 'edited', 'Reviewer edited the draft before approving.'));
     entries.push(audit(resolved, 'approved', `Approved by ${MUNICIPALITY.user.name}.`));
     entries.push(audit(resolved, 'written-back', resolved.suggestedAction));
+
+    // Apply the concrete record change, if the proposal carries one.
+    const applied: AppliedEffect[] = [];
+    if (resolved.effect) {
+      applied.push({
+        ...resolved.effect,
+        id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+        at: resolved.resolvedAt!,
+        by: MUNICIPALITY.user.name,
+        proposalId: resolved.id,
+        proposalTitle: resolved.title,
+      });
+      entries.push(audit(resolved, 'written-back', `Applied to ${resolved.effect.targetType} ${resolved.effect.targetId}: ${resolved.effect.label}.`));
+    }
+
     set((s) => ({
       proposals: s.proposals.map((x) => (x.id === id ? resolved : x)),
       auditLog: [...entries, ...s.auditLog],
+      effects: [...applied, ...s.effects],
     }));
   },
 
@@ -216,5 +262,5 @@ export const useStore = create<AppState>((set, get) => ({
   goTo: (module, customerId) => set({ nav: { module, customerId } }),
   clearNav: () => set({ nav: null }),
 
-  reset: () => set({ proposals: [], auditLog: [], runs: [], posts: [] }),
+  reset: () => set({ proposals: [], auditLog: [], runs: [], posts: [], effects: [] }),
 }));
