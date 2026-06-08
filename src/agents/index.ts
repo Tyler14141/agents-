@@ -17,6 +17,7 @@ export const PROPOSAL_KIND_LABEL: Record<string, string> = {
   'payroll-exception': 'Payroll exception',
   'payroll-checklist': 'Payroll checklist',
   report: 'Report',
+  'audit-artifact': 'Audit artifact',
   'agenda-packet': 'Agenda / packet',
   'public-notice': 'Public notice',
   'records-triage': 'Records request',

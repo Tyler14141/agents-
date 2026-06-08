@@ -294,6 +294,8 @@ export type ProposalKind =
   | 'payroll-checklist'
   // Manager / cross-office
   | 'report'
+  // Year-end audit
+  | 'audit-artifact'
   // Clerk
   | 'agenda-packet'
   | 'public-notice'

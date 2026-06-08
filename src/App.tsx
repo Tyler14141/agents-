@@ -9,6 +9,7 @@ import { TaxScreen } from './components/screens/TaxScreen';
 import { UtilityScreen } from './components/screens/UtilityScreen';
 import { BudgetaryScreen } from './components/screens/BudgetaryScreen';
 import { PayrollScreen } from './components/screens/PayrollScreen';
+import { YearEndAuditScreen } from './components/screens/YearEndAuditScreen';
 import { useStore } from './store';
 import { MUNICIPALITY } from './data/municipal';
 
@@ -24,6 +25,7 @@ const MODULES = [
   { id: 'ub', label: 'Utility Billing', icon: '💧', color: '#2980b9', active: true },
   { id: 'bud', label: 'Budgetary', icon: '💼', color: '#d68910', active: true },
   { id: 'pr', label: 'Payroll', icon: '👥', color: '#8e44ad', active: true },
+  { id: 'eoy', label: 'Year-End / Audit', icon: '📋', color: '#0e7490', active: true },
   { id: 'clk', label: 'Clerk', icon: '🗂️', color: '#16a085', active: false },
   { id: 'cama', label: 'CAMA', icon: '📐', color: '#7f8c8d', active: false },
 ];
@@ -100,6 +102,17 @@ const MODULE_DEFS: Record<string, TrioModuleDef> = {
       { label: 'File Maintenance' },
     ],
     tabs: [{ id: 'run', label: 'Pay Run', color: '#8e44ad', Screen: PayrollScreen }],
+  },
+  eoy: {
+    brand: 'YEAR-END / AUDIT',
+    menu: [
+      { label: 'Audit Workspace', active: true }, { label: 'Close Checklist' }, { label: 'Reconciliations' },
+      { label: 'PBC Package' }, { label: 'Schedules' }, { label: 'Sign-off' },
+      { label: 'Reports', section: true },
+      { label: 'Trial Balance', indent: true }, { label: 'Audit Trail', indent: true },
+      { label: 'File Maintenance' },
+    ],
+    tabs: [{ id: 'audit', label: 'Year-End Audit', color: '#0e7490', Screen: YearEndAuditScreen }],
   },
 };
 

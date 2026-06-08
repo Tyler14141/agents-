@@ -1,5 +1,6 @@
 import type { AgentProposal, AgentRole } from '../types';
 import { financeVariance, financeExceptions, financeClose, financeCouncil, financeCashRecon, financeControls } from './finance';
+import { financeAuditPrep } from './audit';
 import { csTriage, csReplies, csContext } from './customerService';
 import { utilityUsageScan, utilityDelinquency, utilityFinalBills, utilityBillRunSummary } from './utility';
 import { payrollPreRun, payrollExceptionScan, payrollYearEnd } from './payroll';
@@ -46,6 +47,7 @@ export const AGENTS: AgentDef[] = [
       { id: 'council', label: 'Council briefing', description: 'Draft a financial-position memo for the council packet.', cadence: 'Monthly', run: financeCouncil },
       { id: 'cash-recon', label: 'Daily cash reconciliation', description: 'Reconcile counted drawers to posted receipts; flag variances before deposit.', cadence: 'Daily', run: financeCashRecon },
       { id: 'controls', label: 'Internal controls monitor', description: 'Surface segregation-of-duties and anomaly signals (voids, round-dollar adjustments, off-cycle changes).', cadence: 'Daily', run: financeControls },
+      { id: 'audit-prep', label: 'Year-end audit prep', description: 'Assemble the auditor PBC package and an audit-readiness summary.', cadence: 'Yearly', run: financeAuditPrep },
     ],
   },
   {
