@@ -1,10 +1,10 @@
 import type { AgentProposal, AgentRole } from '../types';
-import { financeVariance, financeExceptions, financeClose, financeCouncil } from './finance';
+import { financeVariance, financeExceptions, financeClose, financeCouncil, financeCashRecon, financeControls } from './finance';
 import { csTriage, csReplies, csContext } from './customerService';
 import { utilityUsageScan, utilityDelinquency, utilityFinalBills, utilityBillRunSummary } from './utility';
 import { payrollPreRun, payrollExceptionScan, payrollYearEnd } from './payroll';
 import { managerDailyReport } from './manager';
-import { taxDelinquency, taxCertificates, taxOwnership } from './tax';
+import { taxDelinquency, taxCertificates, taxOwnership, taxLienWatch } from './tax';
 import { clerkAgenda, clerkNotice, clerkRecords } from './clerk';
 import { codeTriage, codeInspections, codeNotices, codeAging } from './code';
 import { assessingParcelBrief, assessingPermitReview, assessingHandoff, assessingExemptionAppeal } from './assessing';
@@ -44,6 +44,8 @@ export const AGENTS: AgentDef[] = [
       { id: 'exceptions', label: 'Cross-module exception summary', description: 'Summarize open exceptions across tax, utility, payroll, and cash.', cadence: 'Weekly', run: financeExceptions },
       { id: 'close', label: 'Month-end close checklist', description: 'Generate the close checklist seeded with open items.', cadence: 'Monthly', run: financeClose },
       { id: 'council', label: 'Council briefing', description: 'Draft a financial-position memo for the council packet.', cadence: 'Monthly', run: financeCouncil },
+      { id: 'cash-recon', label: 'Daily cash reconciliation', description: 'Reconcile counted drawers to posted receipts; flag variances before deposit.', cadence: 'Daily', run: financeCashRecon },
+      { id: 'controls', label: 'Internal controls monitor', description: 'Surface segregation-of-duties and anomaly signals (voids, round-dollar adjustments, off-cycle changes).', cadence: 'Daily', run: financeControls },
     ],
   },
   {
@@ -110,6 +112,7 @@ export const AGENTS: AgentDef[] = [
     systems: ['TRIO Tax Billing & Collections', 'CAMA'],
     status: 'active',
     tasks: [
+      { id: 'lien-watch', label: 'Lien lifecycle watchdog', description: 'Track the 18-month foreclosure clock; draft statutory notices and flag imminent foreclosures.', cadence: 'Weekly', run: taxLienWatch },
       { id: 'delinquency', label: 'Delinquency notices', description: 'Draft notices for overdue tax accounts.', cadence: 'Weekly', run: taxDelinquency },
       { id: 'certificates', label: 'Tax certificate prep', description: 'Prepare payoff/redemption worksheets for lien accounts.', cadence: 'On demand', run: taxCertificates },
       { id: 'ownership', label: 'Ownership-change review', description: 'Checklist billing/ownership updates from recent recorded sales.', cadence: 'Daily', run: taxOwnership },

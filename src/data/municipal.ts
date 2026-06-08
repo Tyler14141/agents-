@@ -1,7 +1,9 @@
 import type {
   AgendaSubmission,
   BudgetLine,
+  CashDrawer,
   CodeCase,
+  ControlEvent,
   Employee,
   Exception,
   Inquiry,
@@ -15,6 +17,7 @@ import type {
   Resident,
   RevenueLine,
   TaxAccount,
+  TaxLien,
   UtilityAccount,
 } from '../types';
 
@@ -253,6 +256,22 @@ export const TAX_ACCOUNTS: TaxAccount[] = [
     status: 'current',
     lastPayment: { date: '2026-04-18', amount: 1028.5 },
   },
+  {
+    id: 'T-3093',
+    residentId: 'R-1006',
+    parcelId: '07-A-15',
+    assessedValue: 268000,
+    annualTax: 4556,
+    balance: 4556,
+    status: 'lien',
+    lastPayment: { date: '2025-08-19', amount: 2278 },
+  },
+];
+
+// Matured tax liens. Maine auto-forecloses 18 months after the lien is recorded.
+export const LIENS: TaxLien[] = [
+  { id: 'LN-2024-031', taxAccountId: 'T-3091', parcelId: '09-D-31', owner: 'Northern Maine Realty LLC', recordedDate: '2024-12-15', foreclosureDate: '2026-06-15', principal: 6970, interestAndCosts: 612.4, status: 'active' },
+  { id: 'LN-2025-088', taxAccountId: 'T-3093', parcelId: '07-A-15', owner: 'Greenfield Apartments LLC', recordedDate: '2025-10-01', foreclosureDate: '2027-04-01', principal: 4556, interestAndCosts: 214.3, status: 'active' },
 ];
 
 export const PARCELS: Parcel[] = [
@@ -303,6 +322,24 @@ export const RECEIPTS: Receipt[] = [
   { id: 'RC-9012', residentId: 'R-1001', date: '2026-06-01', module: 'Cash Receipts', description: 'Motor Vehicle re-registration', amount: 92.0, tender: 'Check' },
   { id: 'RC-9013', date: '2026-06-01', module: 'Cash Receipts', description: 'Dog license — new', amount: 11.0, tender: 'Cash' },
   { id: 'RC-9014', residentId: 'R-1002', date: '2026-05-29', module: 'Utility', description: 'Utility payment on account U-5013', amount: 60.0, tender: 'Credit' },
+  { id: 'RC-9015', residentId: 'R-1003', date: '2026-06-05', module: 'Tax', description: 'Property tax payment', amount: 642.0, tender: 'Check' },
+  { id: 'RC-9016', date: '2026-06-05', module: 'Cash Receipts', description: 'Dog license — new', amount: 11.0, tender: 'Credit' },
+];
+
+// Counted cash-drawer totals at end of day (for daily reconciliation).
+export const CASH_DRAWERS: CashDrawer[] = [
+  // 2026-06-05 front counter: posted receipts were Cash 174.88 / Check 642.00 / Credit 11.00.
+  // Counted cash is $5.00 short -> reconciliation variance to investigate.
+  { date: '2026-06-05', drawer: 'Front Counter 1', countedCash: 169.88, countedCheck: 642.0, countedCredit: 11.0 },
+];
+
+// Internal-control signals surfaced for review (segregation of duties, anomalies).
+export const CONTROL_EVENTS: ControlEvent[] = [
+  { id: 'CTL-01', at: '2026-06-05 14:22', type: 'vendor', module: 'Budgetary / AP', actor: 'rcyr', detail: 'New vendor "Northstar Plowing" added and a $4,200 check issued to it the same day by the same user.', amount: 4200, risk: 'high' },
+  { id: 'CTL-02', at: '2026-06-05 16:03', type: 'adjustment', module: 'Tax', actor: 'kmichaud', detail: 'Manual tax adjustment of −$300.00 (round dollar) on account T-3089 with no linked abatement.', amount: -300, risk: 'high' },
+  { id: 'CTL-03', at: '2026-06-04 11:48', type: 'void', module: 'Cash Receipts', actor: 'bcaron', detail: 'Receipt voided 9 minutes after posting; reason field left blank.', amount: 88.0, risk: 'medium' },
+  { id: 'CTL-04', at: '2026-06-05 09:15', type: 'payroll', module: 'Payroll', actor: 'bcaron', detail: 'Off-cycle pay-rate change entered for E-112 two days before the pay run.', risk: 'medium' },
+  { id: 'CTL-05', at: '2026-06-03 13:30', type: 'refund', module: 'Utility', actor: 'rcyr', detail: 'Utility credit refund of $45.00 issued to a closed account.', amount: 45.0, risk: 'low' },
 ];
 
 // Budgetary — FY2026 General Fund (~$5.8M), modeled on the City of Presque Isle.

@@ -162,6 +162,43 @@ export interface RateSchedule {
   effective: string;
 }
 
+// ---- Tax liens ----
+
+export interface TaxLien {
+  id: string;
+  taxAccountId: string;
+  parcelId: string;
+  owner: string;
+  recordedDate: string;
+  foreclosureDate: string; // statutory auto-foreclosure (18 months in ME)
+  principal: number;
+  interestAndCosts: number;
+  status: 'active' | 'redeemed';
+}
+
+// ---- Cash receipts daily close ----
+
+export interface CashDrawer {
+  date: string;
+  drawer: string;
+  countedCash: number;
+  countedCheck: number;
+  countedCredit: number;
+}
+
+// ---- Internal controls ----
+
+export interface ControlEvent {
+  id: string;
+  at: string;
+  type: 'void' | 'adjustment' | 'vendor' | 'payroll' | 'refund';
+  module: string;
+  actor: string;
+  detail: string;
+  amount?: number;
+  risk: 'high' | 'medium' | 'low';
+}
+
 export type ExceptionModule = 'Utility' | 'Tax' | 'Payroll' | 'Cash Receipts';
 
 export interface Exception {
@@ -245,6 +282,8 @@ export type ProposalKind =
   | 'exception-summary'
   | 'close-checklist'
   | 'council-memo'
+  | 'cash-recon'
+  | 'controls-alert'
   // Utility Billing
   | 'utility-exception'
   | 'utility-collections'
@@ -263,6 +302,7 @@ export type ProposalKind =
   | 'delinquency-notice'
   | 'tax-certificate'
   | 'ownership-change'
+  | 'lien-watch'
   // Code Enforcement
   | 'case-triage'
   | 'inspection-prep'

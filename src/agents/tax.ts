@@ -1,6 +1,11 @@
 import type { AgentProposal, SourceRef, TaxAccount } from '../types';
-import { TAX_ACCOUNTS, PARCELS, RESIDENTS, MUNICIPALITY } from '../data/municipal';
+import { TAX_ACCOUNTS, PARCELS, RESIDENTS, MUNICIPALITY, LIENS } from '../data/municipal';
 import { makeProposal, usd } from './util';
+
+const DAY = 86_400_000;
+function daysUntil(date: string): number {
+  return Math.round((new Date(date).getTime() - new Date(MUNICIPALITY.asOf).getTime()) / DAY);
+}
 
 // ---------------------------------------------------------------------------
 // Tax / Revenue agent
@@ -98,4 +103,64 @@ export function taxOwnership(): AgentProposal[] {
       ].join('\n'),
     });
   });
+}
+
+/** Lien lifecycle watchdog — tracks the 18-month foreclosure clock and notices. */
+export function taxLienWatch(): AgentProposal[] {
+  const out: AgentProposal[] = [];
+  const active = LIENS.filter((l) => l.status === 'active').sort((a, b) => daysUntil(a.foreclosureDate) - daysUntil(b.foreclosureDate));
+  const preLien = TAX_ACCOUNTS.filter((t) => t.status === 'delinquent');
+
+  // Summary across all liens + delinquents approaching lien.
+  out.push(
+    makeProposal({
+      role: 'tax',
+      kind: 'lien-watch',
+      title: `Lien lifecycle watch (${active.length} active lien${active.length === 1 ? '' : 's'})`,
+      rationale: `${active.filter((l) => daysUntil(l.foreclosureDate) <= 60).length} lien(s) within 60 days of automatic foreclosure; ${preLien.length} delinquent account(s) approaching lien.`,
+      confidence: 0.9,
+      sources: active.map((l) => ({ system: 'TRIO' as const, module: 'Tax Collections', recordId: l.id, label: `${l.id} (${l.parcelId})` })),
+      suggestedAction: 'Calendar each foreclosure date; send statutory notices on schedule and escalate imminent liens to the Treasurer and legal.',
+      draft: [
+        `TAX LIEN LIFECYCLE — as of ${MUNICIPALITY.asOf}`,
+        '',
+        `Recorded liens (auto-foreclosure 18 months after recording):`,
+        ...active.map((l) => {
+          const d = daysUntil(l.foreclosureDate);
+          const flag = d <= 30 ? '  ⚠ IMMINENT' : d <= 60 ? '  (action window)' : '';
+          return `• ${l.id} ${l.parcelId} — ${l.owner}: recorded ${l.recordedDate}, forecloses ${l.foreclosureDate} (${d} days), redemption ${usd(l.principal + l.interestAndCosts)}.${flag}`;
+        }),
+        '',
+        `Delinquent accounts approaching lien (issue 30-day notice before recording):`,
+        ...preLien.map((t) => `• ${t.id} parcel ${t.parcelId}: ${usd(t.balance)} outstanding, last paid ${t.lastPayment?.date ?? 'n/a'}.`),
+        '',
+        `Recommended: confirm exact redemption figures in Tax Collections before quoting; do not let any lien reach automatic foreclosure without Treasurer + legal sign-off.`,
+      ].join('\n'),
+    }),
+  );
+
+  // A drafted final notice for each imminent lien.
+  for (const l of active.filter((x) => daysUntil(x.foreclosureDate) <= 30)) {
+    const d = daysUntil(l.foreclosureDate);
+    out.push(
+      makeProposal({
+        role: 'tax',
+        kind: 'lien-watch',
+        title: `Final pre-foreclosure notice: ${l.parcelId} (${l.id})`,
+        rationale: `Lien forecloses in ${d} days (${l.foreclosureDate}); redemption ${usd(l.principal + l.interestAndCosts)}.`,
+        confidence: 0.84,
+        sources: [{ system: 'TRIO', module: 'Tax Collections', recordId: l.id, label: `${l.id} (${l.parcelId})` }],
+        suggestedAction: `Send certified final notice to ${l.owner} and escalate to Treasurer + legal; record proof of mailing.`,
+        draft: [
+          `FINAL NOTICE — IMPENDING TAX LIEN FORECLOSURE`,
+          `${l.owner} — parcel ${l.parcelId} (lien ${l.id})`,
+          '',
+          `Our records show a matured tax lien recorded ${l.recordedDate} that will FORECLOSE AUTOMATICALLY on ${l.foreclosureDate} (${d} days). Upon foreclosure, title to the property passes to the City.`,
+          `To redeem, the full amount of ${usd(l.principal + l.interestAndCosts)} (tax ${usd(l.principal)} plus interest and costs) must be paid before the foreclosure date.`,
+          `Please contact the Tax Collector's office immediately to make payment or arrangements. (Confirm exact payoff before quoting; do not waive interest without authorization.)`,
+        ].join('\n'),
+      }),
+    );
+  }
+  return out;
 }

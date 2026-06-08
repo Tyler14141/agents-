@@ -1,5 +1,5 @@
 import type { AgentProposal, BudgetLine, SourceRef } from '../types';
-import { BUDGET_LINES, EXCEPTIONS, TAX_ACCOUNTS, UTILITY_ACCOUNTS } from '../data/municipal';
+import { BUDGET_LINES, EXCEPTIONS, TAX_ACCOUNTS, UTILITY_ACCOUNTS, RECEIPTS, CASH_DRAWERS, CONTROL_EVENTS } from '../data/municipal';
 import { MUNICIPALITY } from '../data/municipal';
 import { makeProposal, usd, pct } from './util';
 
@@ -188,11 +188,77 @@ function councilMemo(): AgentProposal {
   });
 }
 
+/** Daily cash-drawer reconciliation: posted receipts vs. counted cash. */
+function cashReconciliation(): AgentProposal[] {
+  return CASH_DRAWERS.map((d) => {
+    const dayReceipts = RECEIPTS.filter((r) => r.date === d.date);
+    const expCash = dayReceipts.filter((r) => r.tender === 'Cash').reduce((s, r) => s + r.amount, 0);
+    const expCheck = dayReceipts.filter((r) => r.tender === 'Check').reduce((s, r) => s + r.amount, 0);
+    const expCredit = dayReceipts.filter((r) => r.tender === 'Credit').reduce((s, r) => s + r.amount, 0);
+    const vCash = d.countedCash - expCash;
+    const vCheck = d.countedCheck - expCheck;
+    const vCredit = d.countedCredit - expCredit;
+    const variance = vCash + vCheck + vCredit;
+    const balanced = Math.abs(variance) < 0.005;
+    const line = (label: string, exp: number, counted: number, v: number) =>
+      `  ${label.padEnd(7)} expected ${usd(exp)} · counted ${usd(counted)} · ${v === 0 ? 'balanced' : (v > 0 ? 'over ' : 'short ') + usd(Math.abs(v))}`;
+    return makeProposal({
+      role: 'finance',
+      kind: 'cash-recon',
+      title: `Cash-drawer reconciliation — ${d.drawer}, ${d.date}`,
+      rationale: balanced ? 'Drawer balances to posted receipts.' : `Drawer ${variance > 0 ? 'over' : 'short'} ${usd(Math.abs(variance))} vs. ${dayReceipts.length} posted receipts.`,
+      confidence: 0.92,
+      sources: dayReceipts.map((r) => ({ system: 'TRIO' as const, module: 'Cash Receipts', recordId: r.id, label: `Receipt ${r.id}` })),
+      suggestedAction: balanced
+        ? `Approve the close for ${d.drawer} (${d.date}) and post the deposit.`
+        : `Hold the deposit; investigate the ${usd(Math.abs(variance))} ${variance > 0 ? 'overage' : 'shortage'} (recount, check for an unposted/mis-tendered receipt) before closing.`,
+      draft: [
+        `DAILY CASH-OUT — ${d.drawer} — ${d.date}`,
+        line('Cash', expCash, d.countedCash, vCash),
+        line('Check', expCheck, d.countedCheck, vCheck),
+        line('Credit', expCredit, d.countedCredit, vCredit),
+        `  ${'TOTAL'.padEnd(7)} expected ${usd(expCash + expCheck + expCredit)} · counted ${usd(d.countedCash + d.countedCheck + d.countedCredit)} · ${balanced ? 'BALANCED' : (variance > 0 ? 'OVER ' : 'SHORT ') + usd(Math.abs(variance))}`,
+        '',
+        balanced
+          ? 'Drawer is in balance; safe to deposit.'
+          : `Variance to resolve before deposit. Most cash shortages trace to a mis-keyed tender or change error; recount and review today's ${dayReceipts.length} receipts.`,
+      ].join('\n'),
+    });
+  });
+}
+
+/** Internal-controls monitor: surface segregation-of-duties / anomaly signals. */
+function controlsMonitor(): AgentProposal[] {
+  const events = [...CONTROL_EVENTS].sort((a, b) => ({ high: 0, medium: 1, low: 2 })[a.risk] - ({ high: 0, medium: 1, low: 2 })[b.risk]);
+  const high = events.filter((e) => e.risk === 'high');
+  return [
+    makeProposal({
+      role: 'finance',
+      kind: 'controls-alert',
+      title: `Internal controls review (${events.length} signals, ${high.length} high)`,
+      rationale: `${high.length} high-risk control signal(s) — possible segregation-of-duties or policy exceptions to review.`,
+      confidence: 0.83,
+      sources: events.map((e) => ({ system: 'TRIO' as const, module: e.module, recordId: e.id, label: `${e.id} (${e.type})` })),
+      suggestedAction: 'Review each signal with the responsible staff; document a resolution or escalate to the manager/auditor.',
+      draft: [
+        `INTERNAL CONTROLS — signals as of ${MUNICIPALITY.asOf}`,
+        '',
+        ...events.map((e) => `• [${e.risk.toUpperCase()}] ${e.at} — ${e.module} (${e.actor}): ${e.detail}${e.amount != null ? ` [${usd(Math.abs(e.amount))}]` : ''}`),
+        '',
+        `Priority follow-up: ${high.map((e) => e.id).join(', ') || 'none'}.`,
+        `Note: these are control signals, not findings — confirm intent and documentation before drawing conclusions.`,
+      ].join('\n'),
+    }),
+  ];
+}
+
 // Task-level entry points (used by both the Agents module and the assistant).
 export const financeVariance = (): AgentProposal[] => variancePropsals();
 export const financeExceptions = (): AgentProposal[] => [exceptionSummary()];
 export const financeClose = (): AgentProposal[] => [closeChecklist()];
 export const financeCouncil = (): AgentProposal[] => [councilMemo()];
+export const financeCashRecon = (): AgentProposal[] => cashReconciliation();
+export const financeControls = (): AgentProposal[] => controlsMonitor();
 
 export function runFinanceAgent(): AgentProposal[] {
   return [...variancePropsals(), exceptionSummary(), closeChecklist(), councilMemo()];
