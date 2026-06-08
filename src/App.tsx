@@ -155,11 +155,15 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>('modern');
   const pending = useStore((s) => s.proposals.filter((p) => p.status === 'pending').length);
   const nav = useStore((s) => s.nav);
+  const clearNav = useStore((s) => s.clearNav);
 
-  // Deep-link navigation (e.g. the assistant routing to Customer Search).
+  // Deep-link navigation (the assistant routing to a screen or a customer).
   useEffect(() => {
-    if (nav && nav.module !== activeModule) setActiveModule(nav.module);
-  }, [nav, activeModule]);
+    if (!nav) return;
+    setActiveModule((cur) => (nav.module !== cur ? nav.module : cur));
+    // Screen-only nav has no consumer; clear it. Customer nav is cleared by the screen.
+    if (!nav.customerId) clearNav();
+  }, [nav, clearNav]);
   const toggle = <ThemeToggle theme={theme} setTheme={setTheme} />;
   const moduleDef = MODULE_DEFS[activeModule];
 

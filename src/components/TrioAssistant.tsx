@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { respond, STARTERS, WELCOME, greetingStats, customerNavTarget, type Turn } from '../assistant/respond';
+import { respond, STARTERS, WELCOME, greetingStats, customerNavTarget, screenNavTarget, type Turn } from '../assistant/respond';
 import { askLLM, checkHealth, type ChatMessage } from '../assistant/llm';
 import { useStore } from '../store';
 import { ProposalCard } from './ProposalCard';
@@ -114,14 +114,22 @@ export function TrioAssistant({ screen }: { screen: string }) {
     setInput('');
     setFollowups([]);
 
-    // Deep-link: "Open <customer> in Customer Search" navigates and preselects.
+    // Deep-link: "Take me to <customer> in Customer Search" navigates and preselects their account.
     const navT = customerNavTarget(text);
     if (navT) {
       goTo('cs', navT.id, navT.intent);
       const msg = navT.intent === 'edit'
         ? `Opening ${navT.name} in Customer Search — the edit form is ready to update their contact information.`
-        : `Opening ${navT.name} in Customer Search — you can review balances and take a payment there.`;
+        : `Here's ${navT.name}'s account in Customer Search — balances and payment are on the right.`;
       setItems((prev) => [...prev, { id: nid(), role: 'text', text: msg }]);
+      return;
+    }
+
+    // General navigation: "take me to / go to / open <screen>".
+    const screenT = screenNavTarget(text);
+    if (screenT) {
+      goTo(screenT.id);
+      setItems((prev) => [...prev, { id: nid(), role: 'text', text: `Opening ${screenT.label}.` }]);
       return;
     }
 

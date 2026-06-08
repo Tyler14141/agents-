@@ -407,6 +407,32 @@ export function customerNavTarget(input: string): { id: string; name: string; in
   return r ? { id: r.id, name: r.name, intent } : null;
 }
 
+// Module/screen aliases for "take me to <screen>" navigation.
+const SCREEN_ALIASES: { id: string; label: string; aliases: string[] }[] = [
+  { id: 'cs', label: 'Customer Search', aliases: ['customer search', 'customer service', 'customers', 'balances owed'] },
+  { id: 'cr', label: 'Cash Receipting', aliases: ['cash receipting', 'cash receipts', 'receipt input', 'receipting', 'receipt search'] },
+  { id: 'mv', label: 'Motor Vehicle', aliases: ['motor vehicle', 'vehicle registration', 'mvr3', 'registration'] },
+  { id: 'tax', label: 'Tax Collections', aliases: ['tax collections', 'tax screen', 'tax module', 'property tax', 'tax'] },
+  { id: 'ub', label: 'Utility Billing', aliases: ['utility billing', 'utility', 'water billing', 'water', 'sewer'] },
+  { id: 'bud', label: 'Budgetary', aliases: ['budgetary', 'budget vs actual', 'budget'] },
+  { id: 'pr', label: 'Payroll', aliases: ['payroll', 'pay run', 'pay-run'] },
+  { id: 'eoy', label: 'Year-End / Audit', aliases: ['year-end audit', 'year end audit', 'year-end', 'year end', 'audit prep', 'close & audit'] },
+  { id: 'log', label: 'Audit Trail', aliases: ['audit trail', 'activity log', 'audit log', 'activity'] },
+  { id: 'agents', label: 'Agents', aliases: ['agents module', 'agents', 'agent console', 'operating layer'] },
+];
+
+/** Detects "take me to / go to / open <screen>" and resolves the module id. */
+export function screenNavTarget(input: string): { id: string; label: string } | null {
+  const s = input.trim().toLowerCase();
+  if (!/(take me to|go to|open|show me|navigate to|bring me to|jump to|switch to)/.test(s)) return null;
+  for (const sc of SCREEN_ALIASES) {
+    for (const a of sc.aliases) {
+      if (s.includes(a)) return { id: sc.id, label: sc.label };
+    }
+  }
+  return null;
+}
+
 export function greetingStats(): { exceptions: number; high: number; inquiries: number } {
   return {
     exceptions: EXCEPTIONS.length,
